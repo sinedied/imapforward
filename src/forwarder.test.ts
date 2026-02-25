@@ -16,6 +16,7 @@ vi.mock('imapflow', () => {
           // Never resolves (simulates waiting)
         }),
     ),
+    append: vi.fn(),
     messageFlagsAdd: vi.fn(),
     messageDelete: vi.fn(),
     usable: true,
@@ -24,14 +25,6 @@ vi.mock('imapflow', () => {
 
   return { ImapFlow: vi.fn(() => mockClient) };
 });
-
-// Mock nodemailer
-vi.mock('nodemailer', () => ({
-  createTransport: vi.fn(() => ({
-    sendMail: vi.fn(),
-    options: { auth: { user: 'target@gmail.com' } },
-  })),
-}));
 
 const { Forwarder } = await import('./forwarder.js');
 
@@ -46,10 +39,11 @@ const testSource: SourceConfig = {
 };
 
 const testTarget: TargetConfig = {
-  host: 'smtp.gmail.com',
-  port: 465,
+  host: 'imap.gmail.com',
+  port: 993,
   secure: true,
   auth: { user: 'target@gmail.com', pass: 'pass' },
+  folder: 'INBOX',
 };
 
 describe('forwarder', () => {

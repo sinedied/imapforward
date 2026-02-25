@@ -23,7 +23,7 @@ A simple IMAP email forwarder for syncing multiple email accounts into Gmail.
 - **Selective folders** — Choose which folders to sync (e.g. only INBOX)
 - **Auto cleanup** — Optionally delete messages after successful forwarding
 - **Production-grade** — Auto reconnect with exponential backoff, health check endpoint
-- **Minimal footprint** — Only 2 runtime dependencies (`imapflow` + `nodemailer`)
+- **Minimal footprint** — Only 1 runtime dependency (`imapflow`)
 - **Docker ready** — Alpine-based image with built-in health checks
 
 ## Installation
@@ -47,8 +47,8 @@ Create a `config.json` file:
 ```json
 {
   "target": {
-    "host": "smtp.gmail.com",
-    "port": 465,
+    "host": "imap.gmail.com",
+    "port": 993,
     "secure": true,
     "auth": {
       "user": "your-email@gmail.com",
@@ -79,11 +79,12 @@ Create a `config.json` file:
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `target.host` | string | yes | — | SMTP server hostname |
-| `target.port` | number | yes | — | SMTP server port |
-| `target.secure` | boolean | yes | — | Use TLS |
-| `target.auth.user` | string | yes | — | SMTP username |
-| `target.auth.pass` | string | yes | — | SMTP password or app password |
+| `target.host` | string | yes | — | Target IMAP server hostname |
+| `target.port` | number | yes | — | Target IMAP server port |
+| `target.secure` | boolean | no | port-based | Use TLS (defaults to `true` for ports 465/993) |
+| `target.auth.user` | string | yes | — | Target IMAP username |
+| `target.auth.pass` | string | yes | — | Target IMAP password or app password |
+| `target.folder` | string | no | `"INBOX"` | Target mailbox folder to append messages to |
 | `sources[].name` | string | yes | — | Display name for the source |
 | `sources[].host` | string | yes | — | IMAP server hostname |
 | `sources[].port` | number | yes | — | IMAP server port |
@@ -180,7 +181,7 @@ Status values: `ok` (all connected), `degraded` (some connected), `error` (none 
 
 1. Connects to each configured IMAP source account
 2. Scans for unseen messages that haven't been forwarded yet
-3. Forwards each message via SMTP preserving original headers (raw RFC822)
+3. Appends each message to the target mailbox via IMAP preserving all original headers (raw RFC822)
 4. Marks forwarded messages with a `$Forwarded` IMAP flag
 5. Enters IMAP IDLE mode to watch for new messages in real-time
 6. Automatically reconnects with exponential backoff on connection loss

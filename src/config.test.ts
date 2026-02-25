@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { validateConfig } from './config.js';
 
 const validTarget = {
-  host: 'smtp.gmail.com',
-  port: 465,
+  host: 'imap.gmail.com',
+  port: 993,
   secure: true,
   auth: { user: 'user@gmail.com', pass: 'password' },
 };
@@ -23,7 +23,7 @@ describe('validateConfig', () => {
       sources: [validSource],
     });
 
-    expect(config.target.host).toBe('smtp.gmail.com');
+    expect(config.target.host).toBe('imap.gmail.com');
     expect(config.sources).toHaveLength(1);
     expect(config.sources[0].name).toBe('Work Email');
   });
@@ -166,20 +166,20 @@ describe('validateConfig', () => {
     expect(config.sources[0].secure).toBe(true);
   });
 
-  it('should default secure to true for port 465 (SMTP)', () => {
+  it('should default secure to true for port 993 (IMAP target)', () => {
     const { secure: _, ...targetNoSecure } = validTarget;
     const config = validateConfig({
-      target: { ...targetNoSecure, port: 465 },
+      target: { ...targetNoSecure, port: 993 },
       sources: [validSource],
     });
 
     expect(config.target.secure).toBe(true);
   });
 
-  it('should default secure to false for port 587 (STARTTLS)', () => {
+  it('should default secure to false for port 143 (IMAP target)', () => {
     const { secure: _, ...targetNoSecure } = validTarget;
     const config = validateConfig({
-      target: { ...targetNoSecure, port: 587 },
+      target: { ...targetNoSecure, port: 143 },
       sources: [validSource],
     });
 

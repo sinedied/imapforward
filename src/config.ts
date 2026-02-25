@@ -29,6 +29,7 @@ export type TargetConfig = {
   port: number;
   secure: boolean;
   auth: ImapAuth;
+  folder: string;
 };
 
 export type HealthCheckConfig = {
@@ -75,6 +76,15 @@ function validateTarget(target: unknown): asserts target is TargetConfig {
   }
 
   t.secure ??= defaultSecure(t.port);
+
+  if (
+    t.folder !== undefined &&
+    (typeof t.folder !== 'string' || t.folder.length === 0)
+  ) {
+    throw new Error('config.target.folder must be a non-empty string');
+  }
+
+  t.folder ??= 'INBOX';
 
   validateAuth(t.auth, 'config.target');
 }

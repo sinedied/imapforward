@@ -4,16 +4,15 @@ A simple IMAP email forwarder for syncing multiple email accounts into Gmail.
 
 ## Overview
 
-- Node.js 22+ CLI tool / daemon that monitors IMAP mailboxes via IDLE and forwards emails to a Gmail target via SMTP
-- Preserves original email headers by sending raw RFC822 messages
-- Uses `imapflow` for IMAP and `nodemailer` for SMTP — only 2 runtime dependencies
+- Node.js 22+ CLI tool / daemon that monitors IMAP mailboxes via IDLE and forwards emails to a Gmail target via IMAP APPEND
+- Preserves original email headers by appending raw RFC822 messages directly to the target mailbox
+- Uses `imapflow` for IMAP — only runtime dependency!
 - Supports multiple source accounts → single target, selective folder monitoring, optional cleanup
 
 ## Key Technologies and Frameworks
 
 - **Runtime**: Node.js 22+, TypeScript (ES2024 target, Node16 module resolution)
-- **IMAP**: `imapflow` — modern async/await IMAP client with IDLE support
-- **SMTP**: `nodemailer` — email sending
+- **IMAP**: `imapflow` — modern async/await IMAP client with IDLE support, also used for target APPEND
 - **Testing**: Vitest
 - **Linting**: XO + Prettier (single quotes, no bracket spacing)
 - **Build**: `tsc` (TypeScript compiler)
@@ -25,7 +24,7 @@ A simple IMAP email forwarder for syncing multiple email accounts into Gmail.
 src/
   cli.ts                 # Entry point with arg parsing and signal handling
   config.ts              # Config loading and validation
-  forwarder.ts           # Per-source IMAP→SMTP forwarding logic
+  forwarder.ts           # Per-source IMAP→IMAP forwarding logic
   connection-manager.ts  # Manages N source connections
   health.ts              # HTTP health check server
   logger.ts              # Minimal structured logger

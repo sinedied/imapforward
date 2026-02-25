@@ -1,7 +1,7 @@
 {
   "target": {
-    "host": "smtp.gmail.com",
-    "port": 465,
+    "host": "imap.gmail.com",
+    "port": 993,
     "secure": true,
     "auth": {
       "user": "your-email@gmail.com",

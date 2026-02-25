@@ -1,5 +1,4 @@
 import { ImapFlow, type FetchMessageObject } from 'imapflow';
-import { createTransport, type Transporter } from 'nodemailer';
 import type { SourceConfig, TargetConfig } from './config.js';
 import { createLogger } from './logger.js';
 
@@ -19,10 +18,9 @@ export type ForwarderEvents = {
 };
 
 export class Forwarder {
-  private readonly targetUser: string;
-  private readonly transporter: Transporter;
   private readonly logger;
   private client: ImapFlow | undefined;
+  private targetClient: ImapFlow | undefined;
   private running = false;
   private reconnectDelay = reconnectBaseDelay;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -32,21 +30,10 @@ export class Forwarder {
 
   constructor(
     private readonly source: SourceConfig,
-    target: TargetConfig,
+    private readonly target: TargetConfig,
     private readonly events: ForwarderEvents = {},
   ) {
-    this.targetUser = target.auth.user;
     this.logger = createLogger(source.name);
-
-    this.transporter = createTransport({
-      host: target.host,
-      port: target.port,
-      secure: target.secure,
-      auth: {
-        user: target.auth.user,
-        pass: target.auth.pass,
-      },
-    });
   }
 
   getStatus(): ForwarderStatus {
@@ -83,6 +70,16 @@ export class Forwarder {
       }
 
       this.client = undefined;
+    }
+
+    if (this.targetClient) {
+      try {
+        await this.targetClient.logout();
+      } catch {
+        // Ignore logout errors during shutdown
+      }
+
+      this.targetClient = undefined;
     }
 
     this.notifyStatus();
@@ -282,6 +279,38 @@ export class Forwarder {
     }
   }
 
+  private async connectTarget(): Promise<ImapFlow> {
+    if (this.targetClient?.usable) {
+      return this.targetClient;
+    }
+
+    if (this.targetClient) {
+      try {
+        await this.targetClient.logout();
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+
+    this.targetClient = new ImapFlow({
+      host: this.target.host,
+      port: this.target.port,
+      secure: this.target.secure,
+      auth: {
+        user: this.target.auth.user,
+        pass: this.target.auth.pass,
+      },
+      logger: false,
+    });
+
+    await this.targetClient.connect();
+    this.logger.info(
+      `Connected to target ${this.target.host}:${this.target.port}`,
+    );
+
+    return this.targetClient;
+  }
+
   private async forwardMessage(message: FetchMessageObject): Promise<void> {
     if (!this.client?.usable) return;
 
@@ -294,16 +323,21 @@ export class Forwarder {
         return;
       }
 
-      // Send the raw message preserving all original headers
-      await this.transporter.sendMail({
-        envelope: {
-          from: '',
-          to: this.targetUser,
-        },
-        raw: rawSource,
-      });
+      // Connect to target on-demand (reconnects if stale)
+      const target = await this.connectTarget();
 
-      this.logger.info(`Message UID ${message.uid}: forwarded successfully`);
+      // Append the raw message to the target mailbox via IMAP,
+      // preserving all original headers (From, To, CC, etc.)
+      const result = await target.append(this.target.folder, rawSource);
+      if (!result) {
+        throw new Error('APPEND returned no response');
+      }
+
+      this.logger.info(
+        `Message UID ${message.uid}: appended to ${result.destination}${
+          result.uid ? ` (UID ${result.uid})` : ''
+        }`,
+      );
 
       // Mark as forwarded
       await this.client.messageFlagsAdd({ uid: message.uid }, [forwardedFlag], {
