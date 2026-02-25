@@ -47,39 +47,39 @@
       "main"
     ]
   },
-  "xo": {
-    "space": true,
-    "prettier": true,
-    "overrides": [
-      {
-        "files": "src/**/*.test.ts",
-        "rules": {
-          "@typescript-eslint/no-unsafe-assignment": "off",
-          "@typescript-eslint/no-unsafe-call": "off",
-          "@typescript-eslint/no-unsafe-return": "off",
-          "@typescript-eslint/no-unsafe-argument": "off",
-          "@typescript-eslint/naming-convention": "off"
-        }
+  "xo": [
+    {
+      "space": true,
+      "prettier": true
+    },
+    {
+      "files": ["src/**/*.test.ts", "vitest.config.ts"],
+      "rules": {
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/naming-convention": "off"
       }
-    ]
-  },
+    }
+  ],
   "prettier": {
     "singleQuote": true,
-    "bracketSpacing": false
+    "bracketSpacing": true
   },
   "dependencies": {
     "imapflow": "^1.2.0",
-    "nodemailer": "^7.0.0"
+    "nodemailer": "^8.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/nodemailer": "^6.4.0",
+    "@types/nodemailer": "^7.0.0",
     "prettier": "^3.0.0",
     "semantic-release": "^24.0.0",
-    "semantic-release-npm-github": "^5.0.0",
+    "semantic-release-npm-github": "^6.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
-    "xo": "^0.60.0"
+    "vitest": "^4.0.0",
+    "xo": "^1.0.0"
   }
 }
