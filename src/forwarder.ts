@@ -118,6 +118,7 @@ export class Forwarder {
       this.lastError = undefined;
       this.notifyStatus();
 
+      await this.listFolders();
       await this.processAllFolders();
     } catch (error) {
       this.lastError = (error as Error).message;
@@ -144,6 +145,18 @@ export class Forwarder {
     this.reconnectDelay = Math.min(this.reconnectDelay * 2, reconnectMaxDelay);
 
     await this.connect();
+  }
+
+  private async listFolders(): Promise<void> {
+    if (!this.client?.usable) return;
+
+    try {
+      const mailboxes = await this.client.list();
+      const folderNames = mailboxes.map((m) => m.path);
+      this.logger.info(`Available folders: ${folderNames.join(', ')}`);
+    } catch (error) {
+      this.logger.warn(`Failed to list folders: ${(error as Error).message}`);
+    }
   }
 
   private async processAllFolders(): Promise<void> {

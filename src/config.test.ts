@@ -155,4 +155,44 @@ describe('validateConfig', () => {
       }),
     ).toThrow('config.healthCheck.port must be an integer');
   });
+
+  it('should default secure to true for port 993 (IMAP)', () => {
+    const { secure: _, ...sourceNoSecure } = validSource;
+    const config = validateConfig({
+      target: validTarget,
+      sources: [{ ...sourceNoSecure, port: 993 }],
+    });
+
+    expect(config.sources[0].secure).toBe(true);
+  });
+
+  it('should default secure to true for port 465 (SMTP)', () => {
+    const { secure: _, ...targetNoSecure } = validTarget;
+    const config = validateConfig({
+      target: { ...targetNoSecure, port: 465 },
+      sources: [validSource],
+    });
+
+    expect(config.target.secure).toBe(true);
+  });
+
+  it('should default secure to false for port 587 (STARTTLS)', () => {
+    const { secure: _, ...targetNoSecure } = validTarget;
+    const config = validateConfig({
+      target: { ...targetNoSecure, port: 587 },
+      sources: [validSource],
+    });
+
+    expect(config.target.secure).toBe(false);
+  });
+
+  it('should default secure to false for port 143 (IMAP)', () => {
+    const { secure: _, ...sourceNoSecure } = validSource;
+    const config = validateConfig({
+      target: validTarget,
+      sources: [{ ...sourceNoSecure, port: 143 }],
+    });
+
+    expect(config.sources[0].secure).toBe(false);
+  });
 });

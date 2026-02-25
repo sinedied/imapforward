@@ -18,6 +18,12 @@ export type SourceConfig = {
   deleteAfterForward: boolean;
 };
 
+const implicitTlsPorts = new Set([465, 993]);
+
+function defaultSecure(port: number): boolean {
+  return implicitTlsPorts.has(port);
+}
+
 export type TargetConfig = {
   host: string;
   port: number;
@@ -64,9 +70,11 @@ function validateTarget(target: unknown): asserts target is TargetConfig {
     throw new TypeError('config.target.port must be an integer');
   }
 
-  if (typeof t.secure !== 'boolean') {
+  if (t.secure !== undefined && typeof t.secure !== 'boolean') {
     throw new TypeError('config.target.secure must be a boolean');
   }
+
+  t.secure ??= defaultSecure(t.port);
 
   validateAuth(t.auth, 'config.target');
 }
@@ -93,9 +101,11 @@ function validateSource(
     throw new TypeError(`${path}.port must be an integer`);
   }
 
-  if (typeof s.secure !== 'boolean') {
+  if (s.secure !== undefined && typeof s.secure !== 'boolean') {
     throw new TypeError(`${path}.secure must be a boolean`);
   }
+
+  s.secure ??= defaultSecure(s.port);
 
   validateAuth(s.auth, path);
 
