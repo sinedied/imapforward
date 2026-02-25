@@ -1,12 +1,12 @@
 # Build stage
-FROM node:24-alpine AS build
+FROM node:lts-alpine AS build
 WORKDIR /app
 COPY package*.json tsconfig.json ./
 COPY src/ ./src/
 RUN npm ci && npm run build
 
 # Production stage
-FROM node:24-alpine
+FROM node:lts-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN addgroup -g 1001 -S appgroup && \
