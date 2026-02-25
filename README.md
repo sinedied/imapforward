@@ -190,22 +190,3 @@ Status values: `ok` (all connected), `degraded` (some connected), `error` (none 
 4. Marks forwarded messages with a `$Forwarded` IMAP flag
 5. Enters IMAP IDLE mode to watch for new messages in real-time
 6. Automatically reconnects with exponential backoff on connection loss
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev -- --config config.json
-
-# Build
-npm run build
-
-# Lint
-npm run lint
-
-# Test
-npm test
-```
