@@ -1,12 +1,12 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
-import type {SourceConfig, TargetConfig} from './config.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { SourceConfig, TargetConfig } from './config.js';
 
 // Mock imapflow
 vi.mock('imapflow', () => {
   const mockClient = {
     connect: vi.fn(),
     logout: vi.fn(),
-    getMailboxLock: vi.fn(() => ({release: vi.fn()})),
+    getMailboxLock: vi.fn(() => ({ release: vi.fn() })),
     fetch: vi.fn(function* () {
       // No messages
     }),
@@ -22,25 +22,25 @@ vi.mock('imapflow', () => {
     on: vi.fn(),
   };
 
-  return {ImapFlow: vi.fn(() => mockClient)};
+  return { ImapFlow: vi.fn(() => mockClient) };
 });
 
 // Mock nodemailer
 vi.mock('nodemailer', () => ({
   createTransport: vi.fn(() => ({
     sendMail: vi.fn(),
-    options: {auth: {user: 'target@gmail.com'}},
+    options: { auth: { user: 'target@gmail.com' } },
   })),
 }));
 
-const {Forwarder} = await import('./forwarder.js');
+const { Forwarder } = await import('./forwarder.js');
 
 const testSource: SourceConfig = {
   name: 'Test Source',
   host: 'imap.test.com',
   port: 993,
   secure: true,
-  auth: {user: 'test@test.com', pass: 'pass'},
+  auth: { user: 'test@test.com', pass: 'pass' },
   folders: ['INBOX'],
   deleteAfterForward: false,
 };
@@ -49,7 +49,7 @@ const testTarget: TargetConfig = {
   host: 'smtp.gmail.com',
   port: 465,
   secure: true,
-  auth: {user: 'target@gmail.com', pass: 'pass'},
+  auth: { user: 'target@gmail.com', pass: 'pass' },
 };
 
 describe('forwarder', () => {

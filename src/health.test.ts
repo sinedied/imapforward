@@ -1,12 +1,12 @@
 import http from 'node:http';
-import {describe, it, expect, vi, afterEach} from 'vitest';
-import {createHealthServer} from './health.js';
-import type {ConnectionManager} from './connection-manager.js';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { createHealthServer } from './health.js';
+import type { ConnectionManager } from './connection-manager.js';
 
 async function makeRequest(
   port: number,
   path: string,
-): Promise<{status: number; body: string}> {
+): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {
     http
       .get(`http://localhost:${port}${path}`, (response) => {
@@ -15,7 +15,7 @@ async function makeRequest(
           body += chunk;
         });
         response.on('end', () => {
-          resolve({status: response.statusCode ?? 0, body});
+          resolve({ status: response.statusCode ?? 0, body });
         });
       })
       .on('error', reject);
@@ -44,7 +44,12 @@ describe('health server', () => {
     const mockManager = {
       getOverallStatus: vi.fn(() => 'ok'),
       getStatuses: vi.fn(() => [
-        {name: 'Test', connected: true, lastSync: undefined, error: undefined},
+        {
+          name: 'Test',
+          connected: true,
+          lastSync: undefined,
+          error: undefined,
+        },
       ]),
     } as unknown as ConnectionManager;
 
@@ -53,10 +58,10 @@ describe('health server', () => {
       server.on('listening', resolve);
     });
 
-    const {status, body} = await makeRequest(getPort(server), '/health');
+    const { status, body } = await makeRequest(getPort(server), '/health');
     expect(status).toBe(200);
 
-    const data = JSON.parse(body) as {status: string};
+    const data = JSON.parse(body) as { status: string };
     expect(data.status).toBe('ok');
   });
 
@@ -78,7 +83,7 @@ describe('health server', () => {
       server.on('listening', resolve);
     });
 
-    const {status} = await makeRequest(getPort(server), '/health');
+    const { status } = await makeRequest(getPort(server), '/health');
     expect(status).toBe(503);
   });
 
@@ -93,7 +98,7 @@ describe('health server', () => {
       server.on('listening', resolve);
     });
 
-    const {status} = await makeRequest(getPort(server), '/unknown');
+    const { status } = await makeRequest(getPort(server), '/unknown');
     expect(status).toBe(404);
   });
 });

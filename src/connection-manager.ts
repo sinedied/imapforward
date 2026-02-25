@@ -1,6 +1,6 @@
-import type {Config} from './config.js';
-import {Forwarder, type ForwarderStatus} from './forwarder.js';
-import {createLogger} from './logger.js';
+import type { Config } from './config.js';
+import { Forwarder, type ForwarderStatus } from './forwarder.js';
+import { createLogger } from './logger.js';
 
 const logger = createLogger('manager');
 

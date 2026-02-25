@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import process from 'node:process';
-import {parseArgs} from 'node:util';
-import {readFileSync} from 'node:fs';
-import type {Server} from 'node:http';
-import {loadConfig} from './config.js';
-import {ConnectionManager} from './connection-manager.js';
-import {createHealthServer} from './health.js';
-import {createLogger, setLogLevel, type LogLevel} from './logger.js';
+import { parseArgs } from 'node:util';
+import { readFileSync } from 'node:fs';
+import type { Server } from 'node:http';
+import { loadConfig } from './config.js';
+import { ConnectionManager } from './connection-manager.js';
+import { createHealthServer } from './health.js';
+import { createLogger, setLogLevel, type LogLevel } from './logger.js';
 
 const logger = createLogger('cli');
 
@@ -15,7 +15,7 @@ function getVersion(): string {
   try {
     const packageJson = JSON.parse(
       readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
-    ) as {version: string};
+    ) as { version: string };
     return packageJson.version;
   } catch {
     return 'unknown';
@@ -37,12 +37,12 @@ Options:
 }
 
 async function main(): Promise<void> {
-  const {values} = parseArgs({
+  const { values } = parseArgs({
     options: {
-      config: {type: 'string', short: 'c', default: 'config.json'},
-      'log-level': {type: 'string', short: 'l', default: 'info'},
-      version: {type: 'boolean', short: 'v', default: false},
-      help: {type: 'boolean', short: 'h', default: false},
+      config: { type: 'string', short: 'c', default: 'config.json' },
+      'log-level': { type: 'string', short: 'l', default: 'info' },
+      version: { type: 'boolean', short: 'v', default: false },
+      help: { type: 'boolean', short: 'h', default: false },
     },
     strict: true,
   });

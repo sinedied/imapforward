@@ -1,5 +1,5 @@
-import {readFile} from 'node:fs/promises';
-import {createLogger} from './logger.js';
+import { readFile } from 'node:fs/promises';
+import { createLogger } from './logger.js';
 
 const logger = createLogger('config');
 

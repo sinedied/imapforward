@@ -1,11 +1,11 @@
-import {describe, it, expect} from 'vitest';
-import {validateConfig} from './config.js';
+import { describe, it, expect } from 'vitest';
+import { validateConfig } from './config.js';
 
 const validTarget = {
   host: 'smtp.gmail.com',
   port: 465,
   secure: true,
-  auth: {user: 'user@gmail.com', pass: 'password'},
+  auth: { user: 'user@gmail.com', pass: 'password' },
 };
 
 const validSource = {
@@ -13,7 +13,7 @@ const validSource = {
   host: 'imap.example.com',
   port: 993,
   secure: true,
-  auth: {user: 'user@example.com', pass: 'password'},
+  auth: { user: 'user@example.com', pass: 'password' },
 };
 
 describe('validateConfig', () => {
@@ -49,7 +49,7 @@ describe('validateConfig', () => {
   it('should preserve custom folders', () => {
     const config = validateConfig({
       target: validTarget,
-      sources: [{...validSource, folders: ['INBOX', 'Sent']}],
+      sources: [{ ...validSource, folders: ['INBOX', 'Sent'] }],
     });
 
     expect(config.sources[0].folders).toEqual(['INBOX', 'Sent']);
@@ -58,7 +58,7 @@ describe('validateConfig', () => {
   it('should preserve deleteAfterForward: true', () => {
     const config = validateConfig({
       target: validTarget,
-      sources: [{...validSource, deleteAfterForward: true}],
+      sources: [{ ...validSource, deleteAfterForward: true }],
     });
 
     expect(config.sources[0].deleteAfterForward).toBe(true);
@@ -67,7 +67,7 @@ describe('validateConfig', () => {
   it('should accept multiple sources', () => {
     const config = validateConfig({
       target: validTarget,
-      sources: [validSource, {...validSource, name: 'Personal Email'}],
+      sources: [validSource, { ...validSource, name: 'Personal Email' }],
     });
 
     expect(config.sources).toHaveLength(2);
@@ -77,7 +77,7 @@ describe('validateConfig', () => {
     const config = validateConfig({
       target: validTarget,
       sources: [validSource],
-      healthCheck: {port: 8080},
+      healthCheck: { port: 8080 },
     });
 
     expect(config.healthCheck?.port).toBe(8080);
@@ -91,19 +91,19 @@ describe('validateConfig', () => {
   });
 
   it('should reject missing target', () => {
-    expect(() => validateConfig({sources: [validSource]})).toThrow(
+    expect(() => validateConfig({ sources: [validSource] })).toThrow(
       'config.target must be an object',
     );
   });
 
   it('should reject missing sources', () => {
-    expect(() => validateConfig({target: validTarget})).toThrow(
+    expect(() => validateConfig({ target: validTarget })).toThrow(
       'config.sources must be a non-empty array',
     );
   });
 
   it('should reject empty sources array', () => {
-    expect(() => validateConfig({target: validTarget, sources: []})).toThrow(
+    expect(() => validateConfig({ target: validTarget, sources: [] })).toThrow(
       'config.sources must be a non-empty array',
     );
   });
@@ -111,14 +111,14 @@ describe('validateConfig', () => {
   it('should reject target with missing host', () => {
     expect(() =>
       validateConfig({
-        target: {...validTarget, host: ''},
+        target: { ...validTarget, host: '' },
         sources: [validSource],
       }),
     ).toThrow('config.target.host must be a non-empty string');
   });
 
   it('should reject target with missing auth', () => {
-    const {auth: _, ...targetNoAuth} = validTarget;
+    const { auth: _, ...targetNoAuth } = validTarget;
     expect(() =>
       validateConfig({
         target: targetNoAuth,
@@ -128,7 +128,7 @@ describe('validateConfig', () => {
   });
 
   it('should reject source with missing name', () => {
-    const {name: _, ...sourceNoName} = validSource;
+    const { name: _, ...sourceNoName } = validSource;
     expect(() =>
       validateConfig({
         target: validTarget,
@@ -141,7 +141,7 @@ describe('validateConfig', () => {
     expect(() =>
       validateConfig({
         target: validTarget,
-        sources: [{...validSource, folders: []}],
+        sources: [{ ...validSource, folders: [] }],
       }),
     ).toThrow('config.sources[0].folders must be a non-empty array');
   });
@@ -151,7 +151,7 @@ describe('validateConfig', () => {
       validateConfig({
         target: validTarget,
         sources: [validSource],
-        healthCheck: {port: 'abc'},
+        healthCheck: { port: 'abc' },
       }),
     ).toThrow('config.healthCheck.port must be an integer');
   });

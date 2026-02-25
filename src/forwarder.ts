@@ -1,7 +1,7 @@
-import {ImapFlow, type FetchMessageObject} from 'imapflow';
-import {createTransport, type Transporter} from 'nodemailer';
-import type {SourceConfig, TargetConfig} from './config.js';
-import {createLogger} from './logger.js';
+import { ImapFlow, type FetchMessageObject } from 'imapflow';
+import { createTransport, type Transporter } from 'nodemailer';
+import type { SourceConfig, TargetConfig } from './config.js';
+import { createLogger } from './logger.js';
 
 const forwardedFlag = '$Forwarded';
 const reconnectBaseDelay = 1000;
@@ -187,8 +187,8 @@ export class Forwarder {
     // Search for messages without the forwarded flag
     try {
       for await (const message of this.client.fetch(
-        {seen: false},
-        {source: true, uid: true, flags: true},
+        { seen: false },
+        { source: true, uid: true, flags: true },
       )) {
         if (!message.flags?.has(forwardedFlag)) {
           messages.push(message);
@@ -234,13 +234,13 @@ export class Forwarder {
       this.logger.info(`Message UID ${message.uid}: forwarded successfully`);
 
       // Mark as forwarded
-      await this.client.messageFlagsAdd({uid: message.uid}, [forwardedFlag], {
+      await this.client.messageFlagsAdd({ uid: message.uid }, [forwardedFlag], {
         uid: true,
       });
 
       // Optionally delete after forwarding
       if (this.source.deleteAfterForward) {
-        await this.client.messageDelete({uid: message.uid}, {uid: true});
+        await this.client.messageDelete({ uid: message.uid }, { uid: true });
         this.logger.info(`Message UID ${message.uid}: deleted from source`);
       }
 
