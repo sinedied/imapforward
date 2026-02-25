@@ -1,10 +1,9 @@
-name: Docker
-
+name: docker
 on:
   schedule:
     - cron: '0 0 1 * *' # First day of every month
   workflow_run:
-    workflows: [Release]
+    workflows: [release]
     types: [completed]
   workflow_dispatch:
     inputs:
