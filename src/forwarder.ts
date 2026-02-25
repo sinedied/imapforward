@@ -303,6 +303,10 @@ export class Forwarder {
       logger: false,
     });
 
+    this.targetClient.on('error', (error: Error) => {
+      this.logger.warn(`Target connection error: ${error.message}`);
+    });
+
     await this.targetClient.connect();
     this.logger.info(
       `Connected to target ${this.target.host}:${this.target.port}`,
