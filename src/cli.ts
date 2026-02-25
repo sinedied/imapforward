@@ -77,23 +77,18 @@ async function main(): Promise<void> {
 
   const manager = new ConnectionManager(config);
 
-  let healthServer: Server | undefined;
-  if (config.healthCheck) {
-    healthServer = createHealthServer(manager, config.healthCheck.port);
-  }
+  const healthServer = createHealthServer(manager, config.healthCheck.port);
 
   // Graceful shutdown
   const shutdown = async () => {
     logger.info('Shutting down...');
     await manager.stopAll();
 
-    if (healthServer) {
-      await new Promise<void>((resolve) => {
-        healthServer.close(() => {
-          resolve();
-        });
+    await new Promise<void>((resolve) => {
+      healthServer.close(() => {
+        resolve();
       });
-    }
+    });
 
     logger.info('Shutdown complete');
     process.exit(0);

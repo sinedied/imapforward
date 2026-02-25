@@ -73,14 +73,23 @@ describe('validateConfig', () => {
     expect(config.sources).toHaveLength(2);
   });
 
-  it('should accept healthCheck config', () => {
+  it('should default healthCheck port to 8080', () => {
     const config = validateConfig({
       target: validTarget,
       sources: [validSource],
-      healthCheck: { port: 8080 },
     });
 
-    expect(config.healthCheck?.port).toBe(8080);
+    expect(config.healthCheck.port).toBe(8080);
+  });
+
+  it('should accept custom healthCheck port', () => {
+    const config = validateConfig({
+      target: validTarget,
+      sources: [validSource],
+      healthCheck: { port: 9090 },
+    });
+
+    expect(config.healthCheck.port).toBe(9090);
   });
 
   it('should reject non-object config', () => {

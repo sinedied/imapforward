@@ -67,9 +67,6 @@ Create a `config.json` file:
       "deleteAfterForward": false
     }
   ],
-  "healthCheck": {
-    "port": 8080
-  }
 }
 ```
 
@@ -91,7 +88,7 @@ Create a `config.json` file:
 | `sources[].auth.pass` | string | yes | — | IMAP password |
 | `sources[].folders` | string[] | no | `["INBOX"]` | Folders to monitor |
 | `sources[].deleteAfterForward` | boolean | no | `false` | Delete messages after forwarding |
-| `healthCheck.port` | number | no | — | HTTP health check port (disabled if omitted) |
+| `healthCheck.port` | number | no | `8080` | HTTP health check server port |
 
 > [!TIP]
 > For Gmail, you need to have 2FA enabled and use an [App Password](https://support.google.com/accounts/answer/185833) instead of your regular password.
@@ -151,7 +148,17 @@ services:
 
 ### Health Check
 
-When `healthCheck.port` is configured, an HTTP health endpoint is available:
+The health check server is always enabled (default port `8080`). You can customize the port in your config:
+
+```json
+{
+  "healthCheck": {
+    "port": 9090
+  }
+}
+```
+
+The HTTP health endpoint is available at:
 
 ```bash
 curl http://localhost:8080/health

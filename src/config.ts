@@ -32,6 +32,8 @@ export type TargetConfig = {
   folder: string;
 };
 
+export const defaultHealthCheckPort = 8080;
+
 export type HealthCheckConfig = {
   port: number;
 };
@@ -39,7 +41,7 @@ export type HealthCheckConfig = {
 export type Config = {
   target: TargetConfig;
   sources: SourceConfig[];
-  healthCheck?: HealthCheckConfig;
+  healthCheck: HealthCheckConfig;
 };
 
 function validateAuth(auth: unknown, path: string): asserts auth is ImapAuth {
@@ -152,7 +154,10 @@ export function validateConfig(raw: unknown): Config {
     }
 
     const hc = config.healthCheck as Record<string, unknown>;
-    if (typeof hc.port !== 'number' || !Number.isInteger(hc.port)) {
+    if (
+      hc.port !== undefined &&
+      (typeof hc.port !== 'number' || !Number.isInteger(hc.port))
+    ) {
       throw new TypeError('config.healthCheck.port must be an integer');
     }
   }
@@ -171,7 +176,12 @@ export function validateConfig(raw: unknown): Config {
   return {
     target: config.target,
     sources,
-    healthCheck: config.healthCheck as HealthCheckConfig | undefined,
+    healthCheck: {
+      port:
+        ((config.healthCheck as Record<string, unknown> | undefined)?.port as
+          | number
+          | undefined) ?? defaultHealthCheckPort,
+    },
   };
 }
 
