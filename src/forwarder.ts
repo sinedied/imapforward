@@ -272,7 +272,7 @@ export class Forwarder {
       this.logger.info(`Found ${messages.length} new message(s) to forward`);
     }
 
-    // Forward messages sequentially to avoid overwhelming the SMTP server
+    // Forward messages sequentially
     for (const message of messages) {
       // eslint-disable-next-line no-await-in-loop
       await this.forwardMessage(message);
@@ -339,7 +339,7 @@ export class Forwarder {
         }`,
       );
 
-      // Mark as forwarded
+      // Mark as forwarded on the source server
       await this.client.messageFlagsAdd({ uid: message.uid }, [forwardedFlag], {
         uid: true,
       });
