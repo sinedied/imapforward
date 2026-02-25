@@ -7,7 +7,8 @@
 [![Docker](https://img.shields.io/badge/ghcr.io-imapforward-blue?style=flat-square)](https://github.com/sinedied/imapforward/pkgs/container/imapforward)
 [![License](https://img.shields.io/github/license/sinedied/imapforward?style=flat-square)](LICENSE)
 
-Simple real-time IMAP email forwarder for syncing multiple email accounts into one. Built to replace deprecated [gmailify](https://support.google.com/mail/answer/7644837) tool for Gmail.
+Simple real-time IMAP email forwarder for syncing multiple email accounts into one.<br>
+Built to replace deprecated [gmailify](https://support.google.com/mail/answer/7644837) tool for Gmail.
 
 [Features](#features) · [Installation](#installation) · [Configuration](#configuration) · [Docker](#docker)
 
