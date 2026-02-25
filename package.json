@@ -17,7 +17,9 @@
     "lint": "xo",
     "lint:fix": "xo --fix",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "docker:build": "docker build -t imapforward .",
+    "docker:run": "docker run --rm -v ./config.json:/app/config.json imapforward"
   },
   "engines": {
     "node": ">=22"
