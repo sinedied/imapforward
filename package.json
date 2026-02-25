@@ -1,0 +1,85 @@
+{
+  "name": "imapforward",
+  "version": "0.0.0-dev",
+  "description": "A simple IMAP email forwarder for syncing multiple email accounts into Gmail",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "imapforward": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "lint": "xo",
+    "lint:fix": "xo --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "imap",
+    "email",
+    "forward",
+    "forwarder",
+    "sync",
+    "gmail",
+    "mail"
+  ],
+  "author": "sinedied",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sinedied/imapforward.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "release": {
+    "extends": "semantic-release-npm-github",
+    "branches": [
+      "main"
+    ]
+  },
+  "xo": {
+    "space": true,
+    "prettier": true,
+    "overrides": [
+      {
+        "files": "src/**/*.test.ts",
+        "rules": {
+          "@typescript-eslint/no-unsafe-assignment": "off",
+          "@typescript-eslint/no-unsafe-call": "off",
+          "@typescript-eslint/no-unsafe-return": "off",
+          "@typescript-eslint/no-unsafe-argument": "off",
+          "@typescript-eslint/naming-convention": "off"
+        }
+      }
+    ]
+  },
+  "prettier": {
+    "singleQuote": true,
+    "bracketSpacing": false
+  },
+  "dependencies": {
+    "imapflow": "^1.2.0",
+    "nodemailer": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^6.4.0",
+    "prettier": "^3.0.0",
+    "semantic-release": "^24.0.0",
+    "semantic-release-npm-github": "^5.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "xo": "^0.60.0"
+  }
+}

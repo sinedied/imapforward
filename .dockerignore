@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.github
+*.md
+LICENSE
+config.json
+.gitignore
+.agents
+coverage
+src/**/*.test.ts
+vitest.config.ts
+TODO

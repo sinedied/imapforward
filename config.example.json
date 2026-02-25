@@ -1,0 +1,40 @@
+{
+  "target": {
+    "host": "smtp.gmail.com",
+    "port": 465,
+    "secure": true,
+    "auth": {
+      "user": "your-email@gmail.com",
+      "pass": "your-app-password"
+    }
+  },
+  "sources": [
+    {
+      "name": "Work Email",
+      "host": "imap.work.com",
+      "port": 993,
+      "secure": true,
+      "auth": {
+        "user": "user@work.com",
+        "pass": "password"
+      },
+      "folders": ["INBOX"],
+      "deleteAfterForward": false
+    },
+    {
+      "name": "Personal Email",
+      "host": "imap.personal.com",
+      "port": 993,
+      "secure": true,
+      "auth": {
+        "user": "user@personal.com",
+        "pass": "password"
+      },
+      "folders": ["INBOX", "Important"],
+      "deleteAfterForward": true
+    }
+  ],
+  "healthCheck": {
+    "port": 8080
+  }
+}
