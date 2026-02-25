@@ -28,6 +28,7 @@ export class Forwarder {
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private lastSync: string | undefined;
   private lastError: string | undefined;
+  private stopResolve: (() => void) | undefined;
 
   constructor(
     private readonly source: SourceConfig,
@@ -71,6 +72,9 @@ export class Forwarder {
       this.reconnectTimer = undefined;
     }
 
+    // Signal any waiting watchFolder to stop
+    this.stopResolve?.();
+
     if (this.client) {
       try {
         await this.client.logout();
@@ -102,6 +106,7 @@ export class Forwarder {
 
       this.client.on('close', () => {
         this.logger.warn('Connection closed');
+        this.stopResolve?.();
         this.notifyStatus();
         void this.scheduleReconnect();
       });
@@ -160,7 +165,7 @@ export class Forwarder {
   }
 
   private async processAllFolders(): Promise<void> {
-    // Process folders sequentially (each enters IDLE mode)
+    // Process folders sequentially
     for (const folder of this.source.folders) {
       if (!this.running || !this.client?.usable) return;
       // eslint-disable-next-line no-await-in-loop
@@ -174,22 +179,76 @@ export class Forwarder {
     this.logger.info(`Processing folder: ${folder}`);
 
     try {
+      // Initial processing: forward any existing unseen messages
       const lock = await this.client.getMailboxLock(folder);
       try {
-        // Forward all unseen messages that haven't been forwarded yet
         await this.forwardNewMessages();
-
-        // Enter IDLE mode to watch for new messages
-        await this.idleLoop(folder);
       } finally {
         lock.release();
       }
+
+      // Watch the folder for new messages using the exists event.
+      // After lock release, imapflow auto-IDLE kicks in to keep
+      // the connection alive and receive server notifications.
+      await this.watchFolder(folder);
     } catch (error) {
       if (this.running) {
         this.logger.error(`Error processing folder "${folder}"`, error);
         this.lastError = (error as Error).message;
         this.notifyStatus();
       }
+    }
+  }
+
+  private async watchFolder(folder: string): Promise<void> {
+    if (!this.client?.usable || !this.running) return;
+
+    this.logger.info(`Watching for new messages in ${folder}...`);
+
+    let processing = false;
+
+    const onExists = async (data: {
+      path: string;
+      count: number;
+      prevCount: number;
+    }) => {
+      if (!this.running || !this.client?.usable || processing) return;
+      if (data.path !== folder || data.count <= data.prevCount) return;
+
+      processing = true;
+      try {
+        this.logger.info(
+          `${data.count - data.prevCount} new message(s) in ${folder}`,
+        );
+        const lock = await this.client.getMailboxLock(folder);
+        try {
+          await this.forwardNewMessages();
+        } finally {
+          lock.release();
+        }
+      } catch (error) {
+        if (this.running) {
+          this.logger.error(
+            `Error processing new messages in "${folder}"`,
+            error,
+          );
+          this.lastError = (error as Error).message;
+          this.notifyStatus();
+        }
+      } finally {
+        processing = false;
+      }
+    };
+
+    this.client.on('exists', onExists);
+
+    // Wait until we're stopped or the connection drops
+    try {
+      await new Promise<void>((resolve) => {
+        this.stopResolve = resolve;
+      });
+    } finally {
+      this.client?.off('exists', onExists);
     }
   }
 
@@ -208,7 +267,7 @@ export class Forwarder {
         }
       }
     } catch {
-      // No messages or fetch error — continue to IDLE
+      // No messages or fetch error — continue
       return;
     }
 
@@ -261,30 +320,6 @@ export class Forwarder {
       this.notifyStatus();
     } catch (error) {
       this.logger.error(`Message UID ${message.uid}: failed to forward`, error);
-    }
-  }
-
-  private async idleLoop(folder: string): Promise<void> {
-    while (this.running && this.client?.usable) {
-      this.logger.info(`Waiting for new messages in ${folder}...`);
-
-      try {
-        // IDLE waits until something changes
-        // eslint-disable-next-line no-await-in-loop
-        await this.client.idle();
-
-        this.logger.info(`Activity detected in ${folder}`);
-
-        // Process any new messages
-        // eslint-disable-next-line no-await-in-loop
-        await this.forwardNewMessages();
-      } catch (error) {
-        if (this.running) {
-          this.logger.error(`IDLE error in "${folder}"`, error);
-        }
-
-        break;
-      }
     }
   }
 
