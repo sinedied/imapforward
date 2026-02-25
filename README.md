@@ -13,8 +13,6 @@ A simple IMAP email forwarder for syncing multiple email accounts into Gmail.
 
 </div>
 
----
-
 ## Features
 
 - **Real-time sync** — Uses IMAP IDLE for instant email forwarding
