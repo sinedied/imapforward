@@ -1,9 +1,11 @@
 # Build stage
 FROM node:lts-alpine AS build
+ARG APP_VERSION=0.0.0-dev
 WORKDIR /app
 COPY package*.json tsconfig.json ./
 COPY src/ ./src/
-RUN npm ci && npm run build
+RUN npm pkg set version="$APP_VERSION" && \
+    npm ci && npm run build
 
 # Production stage
 FROM node:lts-alpine

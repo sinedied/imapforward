@@ -45,11 +45,15 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}},value=${{ steps.tag.outputs.version }},enable=${{ steps.tag.outputs.version != '' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag.outputs.version }},enable=${{ steps.tag.outputs.version != '' }}
-            type=semver,pattern={{major}},value=${{ steps.tag.outputs.version }},enable=${{ steps.tag.outputs.version != '' }}
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value={{date 'YYYYMMDD'}}
+            type=raw,value=latest
+            type=raw,value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.tag != 'latest' }}
+
+      - name: Resolve version
+        id: version
+        run: |
+          version="${{ steps.tag.outputs.version }}"
+          echo "value=${version:-0.0.0-dev}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/build-push-action@v6
         with:
@@ -57,5 +61,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
