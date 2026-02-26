@@ -30,7 +30,7 @@ jobs:
           cd website
           npm ci
           npm run build -- --base-href /imapforward/
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: website/dist/website/browser
       - id: deployment
