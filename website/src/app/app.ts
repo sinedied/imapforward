@@ -88,8 +88,8 @@ import {ConfigTool} from './components/config-tool';
       width: 22px;
       height: 22px;
       background: var(--accent);
-      mask: url('/logo.svg') no-repeat center / contain;
-      -webkit-mask: url('/logo.svg') no-repeat center / contain;
+      mask: url('logo.svg') no-repeat center / contain;
+      -webkit-mask: url('logo.svg') no-repeat center / contain;
     }
 
     .nav-logo {
