@@ -1,0 +1,37 @@
+name: website
+on:
+  push:
+    branches: [main]
+    paths: ['website/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install and build
+        run: |
+          cd website
+          npm ci
+          npm run build -- --base-href /imapforward/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist/website/browser
+      - id: deployment
+        uses: actions/deploy-pages@v4
