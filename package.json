@@ -1,6 +1,6 @@
 {
   "name": "imapforward",
-  "version": "0.0.0-dev",
+  "version": "1.0.0",
   "description": "Simple IMAP email forwarder for syncing multiple email accounts into one",
   "type": "module",
   "main": "dist/cli.js",
