@@ -10,4 +10,5 @@ config.json
 coverage
 src/**/*.test.ts
 vitest.config.ts
+website/
 TODO
