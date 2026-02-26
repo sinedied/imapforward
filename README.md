@@ -2,7 +2,7 @@
 
 
 
-# <img src="https://sinedied.github.io/imapforward/logo.svg" alt="imapforward logo" height="24px"> imapforward
+# <img src="https://sinedied.github.io/imapforward/logo.svg" alt="imapforward logo" height="32px"> imapforward
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/sinedied/imapforward/ci.yml?style=flat-square)](https://github.com/sinedied/imapforward/actions)
 [![npm version](https://img.shields.io/npm/v/imapforward?style=flat-square)](https://www.npmjs.com/package/imapforward)
