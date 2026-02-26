@@ -41,7 +41,7 @@ docker pull ghcr.io/sinedied/imapforward:latest
 
 ## Configuration
 
-Create a `config.json` file:
+Create a `config.json` file. You can use the [online configuration generator](https://sinedied.github.io/imapforward/#config) to build it interactively.
 
 ```json
 {
@@ -99,14 +99,14 @@ Create a `config.json` file:
 ### CLI
 
 ```bash
-# Using default config.json in current directory
+# Run with default config.json in current directory
 imapforward
-
-# Custom config path
-imapforward --config /path/to/config.json
 
 # Set log level
 imapforward --log-level debug
+
+# Custom config path
+imapforward --config /path/to/config.json
 ```
 
 ### CLI Options
