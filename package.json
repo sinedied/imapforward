@@ -55,6 +55,11 @@
       "prettier": true
     },
     {
+      "ignores": [
+        "website/**"
+      ]
+    },
+    {
       "files": [
         "src/**/*.test.ts",
         "vitest.config.ts"
