@@ -33,11 +33,6 @@ import {Component, signal} from '@angular/core';
             <p>Raw RFC822 append preserves original email headers</p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">📦</div>
-            <h3>Minimal</h3>
-            <p>Single runtime dependency — just imapflow</p>
-          </div>
-          <div class="feature-card">
             <div class="feature-icon">🔄</div>
             <h3>Reliable</h3>
             <p>Auto-reconnect with exponential backoff</p>
@@ -153,39 +148,75 @@ import {Component, signal} from '@angular/core';
 
     .features {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 1rem;
       margin-bottom: 3rem;
+      max-width: 680px;
+      margin-inline: auto;
     }
 
     .feature-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+      position: relative;
+      border: none;
       border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      text-align: left;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      overflow: hidden;
+      color: #fff;
 
-      &:hover {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 1px var(--accent-subtle);
+      &:nth-child(1) {
+        background: linear-gradient(135deg, #2563eb, #0ea5e9);
+      }
+
+      &:nth-child(2) {
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+      }
+
+      &:nth-child(3) {
+        background: linear-gradient(135deg, #0891b2, #2dd4bf);
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 15%;
+        right: 15%;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.5),
+          transparent
+        );
       }
 
       .feature-icon {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
+        font-size: 1.75rem;
+        margin-bottom: 0.6rem;
+        display: block;
       }
 
       h3 {
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 0.95rem;
+        font-weight: 700;
         margin-bottom: 0.25rem;
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       }
 
       p {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.92);
         line-height: 1.4;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .features {
+        grid-template-columns: 1fr;
+        max-width: 300px;
       }
     }
 
