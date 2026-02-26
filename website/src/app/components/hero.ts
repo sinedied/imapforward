@@ -7,13 +7,7 @@ import {Component, signal} from '@angular/core';
       <div class="hero-bg"></div>
       <div class="content">
         <h1>
-          <span class="logo-icon">
-            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="7" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M2 9l9 6.5L20 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M22 15l6-5m0 0l-6-5m6 5H18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
+          <span class="logo-icon"></span>
           <span class="title-imap">imap</span><span class="title-forward">forward</span>
         </h1>
         <p class="tagline">
@@ -119,13 +113,12 @@ import {Component, signal} from '@angular/core';
     }
 
     .logo-icon {
-      display: inline-flex;
-
-      svg {
-        width: 1em;
-        height: 1em;
-        color: var(--accent);
-      }
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      background: var(--accent);
+      mask: url('/logo.svg') no-repeat center / contain;
+      -webkit-mask: url('/logo.svg') no-repeat center / contain;
     }
 
     .title-imap {

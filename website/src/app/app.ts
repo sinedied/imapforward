@@ -10,11 +10,7 @@ import {ConfigTool} from './components/config-tool';
     <nav [class.scrolled]="scrolled()">
       <div class="nav-inner">
         <a href="#" class="nav-logo">
-          <svg viewBox="0 0 32 32" fill="none" width="22" height="22">
-            <rect x="2" y="7" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M2 9l9 6.5L20 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M22 15l6-5m0 0l-6-5m6 5H18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <span class="nav-logo-icon"></span>
           imapforward
         </a>
         <div class="nav-links">
@@ -85,6 +81,15 @@ import {ConfigTool} from './components/config-tool';
       display: flex;
       align-items: center;
       justify-content: space-between;
+    }
+
+    .nav-logo-icon {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      background: var(--accent);
+      mask: url('/logo.svg') no-repeat center / contain;
+      -webkit-mask: url('/logo.svg') no-repeat center / contain;
     }
 
     .nav-logo {
