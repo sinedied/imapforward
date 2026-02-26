@@ -37,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sinedied/imapforward.git"
+    "url": "git+https://github.com/sinedied/imapforward.git"
   },
   "publishConfig": {
     "access": "public",
@@ -55,7 +55,10 @@
       "prettier": true
     },
     {
-      "files": ["src/**/*.test.ts", "vitest.config.ts"],
+      "files": [
+        "src/**/*.test.ts",
+        "vitest.config.ts"
+      ],
       "rules": {
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-call": "off",
