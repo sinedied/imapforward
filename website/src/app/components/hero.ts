@@ -117,8 +117,8 @@ import {Component, signal} from '@angular/core';
       width: 1em;
       height: 1em;
       background: var(--accent);
-      mask: url('logo.svg') no-repeat center / contain;
-      -webkit-mask: url('logo.svg') no-repeat center / contain;
+      mask: url('../../assets/logo.svg') no-repeat center / contain;
+      -webkit-mask: url('../../assets/logo.svg') no-repeat center / contain;
     }
 
     .title-imap {

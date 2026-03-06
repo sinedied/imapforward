@@ -49,6 +49,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "logo.svg",
+                "input": "src/assets",
+                "output": "/"
               }
             ],
             "styles": ["src/styles.css"]
