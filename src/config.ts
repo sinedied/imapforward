@@ -16,6 +16,7 @@ export type SourceConfig = {
   auth: ImapAuth;
   folders: string[];
   deleteAfterForward: boolean;
+  targetFolder?: string;
 };
 
 const implicitTlsPorts = new Set([465, 993]);
@@ -128,6 +129,13 @@ function validateSource(
       !s.folders.every((f: unknown) => typeof f === 'string'))
   ) {
     throw new Error(`${path}.folders must be a non-empty array of strings`);
+  }
+
+  if (
+    s.targetFolder !== undefined &&
+    (typeof s.targetFolder !== 'string' || s.targetFolder.length === 0)
+  ) {
+    throw new Error(`${path}.targetFolder must be a non-empty string`);
   }
 }
 

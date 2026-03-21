@@ -67,7 +67,8 @@ Create a `config.json` file. You can use the [online configuration generator](ht
         "pass": "password"
       },
       "folders": ["INBOX"],
-      "deleteAfterForward": false
+      "deleteAfterForward": false,
+      "targetFolder": "Import/Work"
     }
   ],
 }
@@ -82,7 +83,7 @@ Create a `config.json` file. You can use the [online configuration generator](ht
 | `target.secure` | boolean | no | port-based | Use TLS (defaults to `true` for ports 465/993) |
 | `target.auth.user` | string | yes | — | Target IMAP username |
 | `target.auth.pass` | string | yes | — | Target IMAP password or app password |
-| `target.folder` | string | no | `"INBOX"` | Target mailbox folder to append messages to |
+| `target.folder` | string | no | `"INBOX"` | Target mailbox folder to append messages to. If it does not exist and is not `INBOX`, it is created automatically |
 | `sources[].name` | string | yes | — | Display name for the source |
 | `sources[].host` | string | yes | — | IMAP server hostname |
 | `sources[].port` | number | yes | — | IMAP server port |
@@ -92,6 +93,7 @@ Create a `config.json` file. You can use the [online configuration generator](ht
 | `sources[].folders` | string[] | no | `["INBOX"]` | Folders to monitor |
 | `sources[].deleteAfterForward` | boolean | no | `false` | Delete messages after forwarding |
 | `healthCheck.port` | number | no | `8080` | HTTP health check server port |
+| `sources[].targetFolder` | string | no | — | Target mailbox folder for this source. If omitted, `target.folder` is used. If it does not exist and is not `INBOX`, it is created automatically |
 
 > [!TIP]
 > For Gmail, you need to have 2FA enabled and use an [App Password](https://support.google.com/accounts/answer/185833) instead of your regular password.

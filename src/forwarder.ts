@@ -21,6 +21,7 @@ export class Forwarder {
   private readonly logger;
   private client: ImapFlow | undefined;
   private targetClient: ImapFlow | undefined;
+  private readonly ensuredTargetFolders = new Set<string>();
   private running = false;
   private reconnectDelay = reconnectBaseDelay;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -315,6 +316,26 @@ export class Forwarder {
     return this.targetClient;
   }
 
+  private async ensureTargetFolder(
+    target: ImapFlow,
+    targetFolder: string,
+  ): Promise<void> {
+    if (targetFolder === 'INBOX') {
+      return;
+    }
+
+    if (this.ensuredTargetFolders.has(targetFolder)) {
+      return;
+    }
+
+    const result = await target.mailboxCreate(targetFolder);
+    if (result.created) {
+      this.logger.info(`Created target folder: ${result.path}`);
+    }
+
+    this.ensuredTargetFolders.add(targetFolder);
+  }
+
   private async forwardMessage(message: FetchMessageObject): Promise<void> {
     if (!this.client?.usable) return;
 
@@ -332,7 +353,11 @@ export class Forwarder {
 
       // Append the raw message to the target mailbox via IMAP,
       // preserving all original headers (From, To, CC, etc.)
-      const result = await target.append(this.target.folder, rawSource);
+      const targetFolder = this.source.targetFolder ?? this.target.folder;
+
+      await this.ensureTargetFolder(target, targetFolder);
+
+      const result = await target.append(targetFolder, rawSource);
       if (!result) {
         throw new Error('APPEND returned no response');
       }

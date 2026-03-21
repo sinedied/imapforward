@@ -19,7 +19,8 @@
         "pass": "password"
       },
       "folders": ["INBOX"],
-      "deleteAfterForward": false
+      "deleteAfterForward": false,
+      "targetFolder": "Import/Work Email"
     },
     {
       "name": "Personal Email",

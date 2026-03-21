@@ -64,6 +64,15 @@ describe('validateConfig', () => {
     expect(config.sources[0].deleteAfterForward).toBe(true);
   });
 
+  it('should preserve targetFolder when provided', () => {
+    const config = validateConfig({
+      target: validTarget,
+      sources: [{ ...validSource, targetFolder: 'CustomFolder' }],
+    });
+
+    expect(config.sources[0].targetFolder).toBe('CustomFolder');
+  });
+
   it('should accept multiple sources', () => {
     const config = validateConfig({
       target: validTarget,
@@ -163,6 +172,15 @@ describe('validateConfig', () => {
         healthCheck: { port: 'abc' },
       }),
     ).toThrow('config.healthCheck.port must be an integer');
+  });
+
+  it('should reject source with invalid targetFolder', () => {
+    expect(() =>
+      validateConfig({
+        target: validTarget,
+        sources: [{ ...validSource, targetFolder: '' }],
+      }),
+    ).toThrow('config.sources[0].targetFolder must be a non-empty string');
   });
 
   it('should default secure to true for port 993 (IMAP)', () => {
