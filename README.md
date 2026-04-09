@@ -109,7 +109,7 @@ imapforward supports two forwarding methods:
 { "forwardMethod": "imap" }
 ```
 
-Appends the raw RFC822 message directly to the target mailbox via IMAP. This preserves **all** original headers exactly — From, To, CC, Reply-To, Date, Message-ID, etc. Replies and Reply-All work perfectly. However, since messages bypass Gmail's intake pipeline, **spam filtering is not applied**.
+Appends the raw RFC822 message directly to the target mailbox via IMAP. This preserves **all** original headers exactly — From, To, CC, Reply-To, Date, Message-ID, etc. Replies and Reply-All preserve the original sender and recipients. However, since messages bypass Gmail's intake pipeline, **spam filtering is not applied**.
 
 #### SMTP Forward
 
