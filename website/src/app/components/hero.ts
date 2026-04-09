@@ -35,12 +35,12 @@ import {Component, signal} from '@angular/core';
 
         <div class="install-commands">
           <div class="install-cmd">
-            <code>npm install -g imapforward</code>
+            <code>go install github.com/sinedied/imapforward&#64;latest</code>
             <button
-              (click)="copyCmd('npm install -g imapforward')"
-              [class.copied]="copiedCmd() === 'npm install -g imapforward'"
+              (click)="copyCmd('go install github.com/sinedied/imapforward@latest')"
+              [class.copied]="copiedCmd() === 'go install github.com/sinedied/imapforward@latest'"
               title="Copy to clipboard">
-              {{ copiedCmd() === 'npm install -g imapforward' ? '✓' : '⎘' }}
+              {{ copiedCmd() === 'go install github.com/sinedied/imapforward@latest' ? '✓' : '⎘' }}
             </button>
           </div>
           <span class="or">or</span>
