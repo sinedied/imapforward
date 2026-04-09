@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/sinedied/imapforward/compare/1.1.0...1.1.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* update release process to include binaries ([71a2415](https://github.com/sinedied/imapforward/commit/71a24159b38c8af6dbe0b21c9eec1a83810611a0))
+
 # [1.1.0](https://github.com/sinedied/imapforward/compare/1.0.0...1.1.0) (2026-04-09)
 
 
