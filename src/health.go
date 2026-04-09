@@ -43,12 +43,14 @@ func StartHealthServer(manager *Manager, port int) *HealthServer {
 
 	// Catch-all for other routes
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/health" {
-			http.Error(w, "Not Found", http.StatusNotFound)
+		if r.URL.Path == "/health" {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
 		}
+		http.Error(w, "Not Found", http.StatusNotFound)
 	})
 
-	listenAddr := fmt.Sprintf(":%d", port)
+	listenAddr := fmt.Sprintf("127.0.0.1:%d", port)
 	server := &http.Server{
 		Handler: mux,
 	}

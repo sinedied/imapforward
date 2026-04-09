@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/mail"
 	"net/smtp"
+	"sync"
 
 	"github.com/emersion/go-imap/v2"
 )
@@ -19,6 +20,7 @@ type Sender interface {
 
 // IMAPSender forwards messages by appending them to a target IMAP mailbox.
 type IMAPSender struct {
+	mu             sync.Mutex
 	target         TargetConfig
 	logger         *Logger
 	dial           IMAPDialFunc
@@ -37,6 +39,9 @@ func NewIMAPSender(target TargetConfig, dial IMAPDialFunc) *IMAPSender {
 }
 
 func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	c, err := s.getClient()
 	if err != nil {
 		return fmt.Errorf("connect to target: %w", err)
@@ -66,6 +71,9 @@ func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte, targetFolder s
 }
 
 func (s *IMAPSender) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.client != nil {
 		err := s.client.Logout().Wait()
 		s.client = nil

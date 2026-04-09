@@ -632,19 +632,22 @@ export class ConfigTool {
           : {}),
       },
       ...(method !== 'imap' ? {forwardMethod: method} : {}),
-      sources: (v.sources ?? []).map((s) => ({
-        name: s?.name || '',
-        host: s?.host || '',
-        port: Number(s?.port) || 993,
-        secure: s?.secure ?? true,
-        auth: {
-          user: s?.auth?.user || '',
-          pass: s?.auth?.pass || '',
-        },
-        folders: this.parseFolders(s?.folders as string),
-        deleteAfterForward: s?.deleteAfterForward ?? false,
-        ...((s as any)?.targetFolder ? {targetFolder: (s as any).targetFolder} : {}),
-      })),
+      sources: (v.sources ?? []).map((s) => {
+        const tf = (s as Record<string, unknown>)?.['targetFolder'] as string | undefined;
+        return {
+          name: s?.name || '',
+          host: s?.host || '',
+          port: Number(s?.port) || 993,
+          secure: s?.secure ?? true,
+          auth: {
+            user: s?.auth?.user || '',
+            pass: s?.auth?.pass || '',
+          },
+          folders: this.parseFolders(s?.folders as string),
+          deleteAfterForward: s?.deleteAfterForward ?? false,
+          ...(tf ? {targetFolder: tf} : {}),
+        };
+      }),
     };
 
     return JSON.stringify(config, null, 2);

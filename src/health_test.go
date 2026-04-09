@@ -16,7 +16,7 @@ func TestHealthServer_OK(t *testing.T) {
 	}
 
 	manager := NewManager(cfg)
-	fwd := NewForwarder(cfg.Sources[0], &mockSender{}, nil, nil)
+	fwd := NewForwarder(cfg.Sources[0], &mockSender{}, nil)
 	fwd.setConnected(true)
 	manager.forwarders = append(manager.forwarders, fwd)
 
@@ -58,7 +58,7 @@ func TestHealthServer_Error(t *testing.T) {
 	}
 
 	manager := NewManager(cfg)
-	fwd := NewForwarder(cfg.Sources[0], &mockSender{}, nil, nil)
+	fwd := NewForwarder(cfg.Sources[0], &mockSender{}, nil)
 	manager.forwarders = append(manager.forwarders, fwd)
 
 	server := StartHealthServer(manager, 0)
@@ -115,8 +115,8 @@ func TestManager_GetOverallStatus(t *testing.T) {
 	}
 
 	manager := NewManager(cfg)
-	fwdA := NewForwarder(cfg.Sources[0], &mockSender{}, nil, nil)
-	fwdB := NewForwarder(cfg.Sources[1], &mockSender{}, nil, nil)
+	fwdA := NewForwarder(cfg.Sources[0], &mockSender{}, nil)
+	fwdB := NewForwarder(cfg.Sources[1], &mockSender{}, nil)
 	manager.forwarders = []*Forwarder{fwdA, fwdB}
 
 	// Both disconnected → error

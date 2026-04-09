@@ -16,7 +16,7 @@ func TestForwarder_GetStatus_Initial(t *testing.T) {
 		Folders: []string{"INBOX"},
 	}
 
-	fwd := NewForwarder(source, nil, nil, nil)
+	fwd := NewForwarder(source, nil, nil)
 	status := fwd.GetStatus()
 
 	if status.Name != "Test" {
@@ -45,7 +45,7 @@ func TestForwarder_StatusUpdates(t *testing.T) {
 
 	var mu sync.Mutex
 	var lastStatus ForwarderStatus
-	fwd := NewForwarder(source, nil, nil, func(s ForwarderStatus) {
+	fwd := NewForwarder(source, nil, func(s ForwarderStatus) {
 		mu.Lock()
 		lastStatus = s
 		mu.Unlock()
@@ -81,7 +81,7 @@ func TestForwarder_Stop(t *testing.T) {
 	}
 
 	mockSender := &mockSender{}
-	fwd := NewForwarder(source, mockSender, nil, nil)
+	fwd := NewForwarder(source, mockSender, nil)
 
 	fwd.setConnected(true)
 	fwd.Stop()
@@ -107,7 +107,7 @@ func TestForwarder_RunCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
-	fwd := NewForwarder(source, &mockSender{}, DefaultIMAPDial, nil)
+	fwd := NewForwarder(source, &mockSender{}, nil)
 
 	// Should return immediately due to cancelled context
 	fwd.Run(ctx)

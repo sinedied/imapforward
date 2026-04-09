@@ -57,7 +57,6 @@ func DefaultIMAPDial(host string, port int, secure *bool) (IMAPClient, error) {
 type Forwarder struct {
 	source SourceConfig
 	sender Sender
-	dial   IMAPDialFunc
 	logger *Logger
 
 	mu        sync.Mutex
@@ -72,13 +71,11 @@ type Forwarder struct {
 func NewForwarder(
 	source SourceConfig,
 	sender Sender,
-	dial IMAPDialFunc,
 	onStatusChange func(ForwarderStatus),
 ) *Forwarder {
 	return &Forwarder{
 		source:         source,
 		sender:         sender,
-		dial:           dial,
 		logger:         newLogger(source.Name),
 		onStatusChange: onStatusChange,
 	}
@@ -165,26 +162,28 @@ func (f *Forwarder) runOnce(ctx context.Context) error {
 		return f.monitorFolder(ctx, f.source.Folders[0], true)
 	}
 
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	var wg sync.WaitGroup
-	errCh := make(chan error, len(f.source.Folders))
+	var once sync.Once
+	var firstErr error
 
 	for i, folder := range f.source.Folders {
 		wg.Add(1)
 		go func(folder string, first bool) {
 			defer wg.Done()
-			if err := f.monitorFolder(ctx, folder, first); err != nil && ctx.Err() == nil {
-				errCh <- err
+			if err := f.monitorFolder(runCtx, folder, first); err != nil && runCtx.Err() == nil {
+				once.Do(func() {
+					firstErr = err
+					cancel()
+				})
 			}
 		}(folder, i == 0)
 	}
 
 	wg.Wait()
-	close(errCh)
-
-	for err := range errCh {
-		return err
-	}
-	return nil
+	return firstErr
 }
 
 func (f *Forwarder) connectSource(folder string) (*imapclient.Client, chan struct{}, error) {
