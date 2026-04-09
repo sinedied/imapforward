@@ -14,10 +14,7 @@ import {ScrollAnimate} from '../directives/scroll-animate';
             <div class="step-number">1</div>
             <div class="step-content">
               <h3>Install</h3>
-              <p>Install globally via npm or pull the Docker image:</p>
-              <div class="code-block">
-                <pre><code>npm install -g imapforward</code></pre>
-              </div>
+              <p>Download a binary from <a href="https://github.com/sinedied/imapforward/releases" target="_blank">GitHub Releases</a>, or pull the Docker image:</p>
               <div class="code-block">
                 <pre><code>docker pull ghcr.io/sinedied/imapforward:latest</code></pre>
               </div>
@@ -58,10 +55,10 @@ import {ScrollAnimate} from '../directives/scroll-animate';
             <h3>CLI Options</h3>
             <table>
               <tbody>
-                <tr><td><code>-c, --config</code></td><td>Path to config file</td></tr>
-                <tr><td><code>-l, --log-level</code></td><td>Log level (debug, info, warn, error)</td></tr>
-                <tr><td><code>-v, --version</code></td><td>Show version</td></tr>
-                <tr><td><code>-h, --help</code></td><td>Show help</td></tr>
+                <tr><td><code>-config</code></td><td>Path to config file</td></tr>
+                <tr><td><code>-log-level</code></td><td>Log level (debug, info, warn, error)</td></tr>
+                <tr><td><code>-version</code></td><td>Show version</td></tr>
+                <tr><td><code>-help</code></td><td>Show help</td></tr>
               </tbody>
             </table>
           </div>
@@ -70,8 +67,8 @@ import {ScrollAnimate} from '../directives/scroll-animate';
             <h3>Environment Variables</h3>
             <table>
               <tbody>
-                <tr><td><code>IMAPFORWARD_CONFIG</code></td><td>Config file path (alternative to --config)</td></tr>
-                <tr><td><code>LOG_LEVEL</code></td><td>Log level (alternative to --log-level)</td></tr>
+                <tr><td><code>IMAPFORWARD_CONFIG</code></td><td>Config file path (alternative to -config)</td></tr>
+                <tr><td><code>LOG_LEVEL</code></td><td>Log level (alternative to -log-level)</td></tr>
               </tbody>
             </table>
           </div>
