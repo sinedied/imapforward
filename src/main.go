@@ -14,6 +14,9 @@ var version = "1.1.1"
 func main() {
 	configPath := flag.String("config", "config.json", "Path to config file")
 	logLevel := flag.String("log-level", "info", "Log level: debug, info, warn, error")
+	authClientID := flag.String("auth-client-id", "", "Google OAuth2 client ID (for -auth flow)")
+	authClientSecret := flag.String("auth-client-secret", "", "Google OAuth2 client secret (for -auth flow)")
+	runAuth := flag.Bool("auth", false, "Run OAuth2 authorization flow to get a Gmail API refresh token")
 	showVersion := flag.Bool("version", false, "Show version")
 	showHelp := flag.Bool("help", false, "Show help")
 	flag.Parse()
@@ -25,6 +28,18 @@ func main() {
 
 	if *showVersion {
 		fmt.Println(version)
+		os.Exit(0)
+	}
+
+	if *runAuth {
+		if *authClientID == "" || *authClientSecret == "" {
+			fmt.Fprintln(os.Stderr, "Error: -auth-client-id and -auth-client-secret are required with -auth")
+			os.Exit(1)
+		}
+		if err := RunOAuthFlow(*authClientID, *authClientSecret); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
@@ -76,8 +91,11 @@ func printHelp() {
 Usage: imapforward [options]
 
 Options:
-  -config <path>      Path to config file (default: config.json)
-  -log-level <level>  Log level: debug, info, warn, error (default: info)
-  -version            Show version
-  -help               Show this help`)
+  -config <path>             Path to config file (default: config.json)
+  -log-level <level>         Log level: debug, info, warn, error (default: info)
+  -auth                      Run OAuth2 flow to obtain a Gmail API refresh token
+  -auth-client-id <id>       Google OAuth2 client ID (required with -auth)
+  -auth-client-secret <sec>  Google OAuth2 client secret (required with -auth)
+  -version                   Show version
+  -help                      Show this help`)
 }

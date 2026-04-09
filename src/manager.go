@@ -31,9 +31,12 @@ func (m *Manager) StartAll(ctx context.Context) {
 
 		var sender Sender
 
-		if m.config.ForwardMethod == "smtp" {
+		switch m.config.ForwardMethod {
+		case "smtp":
 			sender = NewSMTPSender(m.config.Target)
-		} else {
+		case "gmail-api":
+			sender = NewGmailAPISender(*m.config.GmailAPI, m.config.Target.Auth.User)
+		default:
 			sender = NewIMAPSender(m.config.Target, DefaultIMAPDial)
 		}
 
