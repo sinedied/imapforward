@@ -34,13 +34,35 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
                     <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.162V6a2 2 0 00-2-2H3z"/>
                     <path d="M19 8.839l-7.556 3.778a2.75 2.75 0 01-2.888 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z"/>
                   </svg>
-                  Target (Gmail)
+                  Target
                 </legend>
+
+                <div class="form-row">
+                  <div class="field">
+                    <label>Forwarding Method *</label>
+                    <div class="method-toggle">
+                      <label class="radio-label">
+                        <input type="radio" formControlName="forwardMethod" value="imap" />
+                        <span>IMAP Append</span>
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" formControlName="forwardMethod" value="smtp" />
+                        <span>SMTP Forward</span>
+                      </label>
+                    </div>
+                    <span class="hint">
+                      {{ form.get('forwardMethod')?.value === 'smtp'
+                        ? 'Forwards via SMTP — enables spam filtering, adds Reply-To for replies'
+                        : 'Appends raw message via IMAP — preserves all headers, bypasses spam filters' }}
+                    </span>
+                  </div>
+                </div>
                 <div formGroupName="target">
                   <div class="form-row">
                     <div class="field">
                       <label for="t-host">Host *</label>
-                      <input id="t-host" formControlName="host" placeholder="imap.gmail.com" />
+                      <input id="t-host" formControlName="host"
+                        [placeholder]="form.get('forwardMethod')?.value === 'smtp' ? 'smtp.gmail.com' : 'imap.gmail.com'" />
                     </div>
                     <div class="field field-sm">
                       <label for="t-port">Port *</label>
@@ -68,7 +90,11 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
                   <div class="form-row">
                     <div class="field">
                       <label for="t-folder">Folder</label>
-                      <input id="t-folder" formControlName="folder" placeholder="INBOX" />
+                      <input id="t-folder" formControlName="folder" placeholder="INBOX"
+                        [class.field-disabled]="form.get('forwardMethod')?.value === 'smtp'" />
+                      @if (form.get('forwardMethod')?.value === 'smtp') {
+                        <span class="hint">Not used with SMTP forwarding</span>
+                      }
                     </div>
                   </div>
                 </div>
@@ -317,6 +343,32 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
       padding-bottom: 0.55rem;
     }
 
+    .field-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .method-toggle {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.2rem;
+    }
+
+    .radio-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      user-select: none;
+
+      input[type="radio"] {
+        accent-color: var(--accent);
+        margin: 0;
+      }
+    }
+
     .toggle-label {
       display: inline-flex;
       align-items: center;
@@ -533,6 +585,7 @@ export class ConfigTool {
   protected readonly copied = signal(false);
 
   protected readonly form = this.fb.group({
+    forwardMethod: ['imap'],
     target: this.fb.group({
       host: ['imap.gmail.com', Validators.required],
       port: [993, [Validators.required]],
@@ -556,6 +609,7 @@ export class ConfigTool {
     const v = this.formValue();
     if (!v) return '';
 
+    const method = v.forwardMethod || 'imap';
     const config: Record<string, unknown> = {
       target: {
         host: v.target?.host || '',
@@ -565,10 +619,11 @@ export class ConfigTool {
           user: v.target?.auth?.user || '',
           pass: v.target?.auth?.pass || '',
         },
-        ...(v.target?.folder && v.target.folder !== 'INBOX'
+        ...(method === 'imap' && v.target?.folder && v.target.folder !== 'INBOX'
           ? {folder: v.target.folder}
           : {}),
       },
+      ...(method !== 'imap' ? {forwardMethod: method} : {}),
       sources: (v.sources ?? []).map((s) => ({
         name: s?.name || '',
         host: s?.host || '',
