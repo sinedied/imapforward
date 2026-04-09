@@ -8,6 +8,7 @@
       "pass": "your-app-password"
     }
   },
+  "forwardMethod": "imap",
   "sources": [
     {
       "name": "Work Email",

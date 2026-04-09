@@ -1,11 +1,8 @@
 node_modules/
-dist/
-*.js
-*.d.ts
-*.js.map
-!vitest.config.ts
 config.json
 .env
-coverage/
 .DS_Store
 TODO
+
+# Go
+imapforward
