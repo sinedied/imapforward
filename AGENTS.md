@@ -41,14 +41,22 @@ website/                 # Angular website (separate, not part of Go build)
 ## Development Workflow
 
 ```bash
-go build -o imapforward ./src/  # Build
-go test ./src/                  # Run tests
-go test -v ./src/               # Run tests with verbose output
-go run ./src/                   # Run directly (no build needed)
-go vet ./src/                   # Static analysis
+just build        # Build the binary
+just test         # Run tests
+just vet          # Static analysis
+just lint         # Run linter (golangci-lint)
+just fmt          # Format code (gofmt)
+just check        # Run all of the above
+just docker-build # Build Docker image
+just run          # Run directly (no build needed)
 ```
 
-A task is only complete when `go build`, `go vet`, and `go test` all pass.
+A task is only complete when **all** of the following pass:
+
+1. `just check` — build + vet + test + lint all green
+2. `just docker-build` — Docker image builds successfully
+3. Documentation is up to date: `README.md`, `config.example.json`
+4. Website is up to date: config editor (`website/src/app/components/config-tool.ts`) and setup guide (`website/src/app/components/setup.ts`) reflect any config or feature changes, and `cd website && npx ng build` succeeds
 
 ## Coding Guidelines
 
