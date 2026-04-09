@@ -102,7 +102,7 @@ func NewSMTPSender(target TargetConfig) *SMTPSender {
 }
 
 func (s *SMTPSender) Send(ctx context.Context, rawMessage []byte) error {
-	modified := ensureReplyTo(rawMessage)
+	modified := ensureReplyTo(rawMessage, s.logger)
 
 	addr := fmt.Sprintf("%s:%d", s.target.Host, s.target.Port)
 	auth := smtp.PlainAuth("", s.target.Auth.User, s.target.Auth.Pass, s.target.Host)
@@ -160,9 +160,12 @@ func (s *SMTPSender) sendImplicitTLS(addr string, auth smtp.Auth, msg []byte) er
 // ensureReplyTo adds a Reply-To header pointing to the original From address
 // if one is not already present. This preserves reply/reply-all functionality
 // when forwarding via SMTP.
-func ensureReplyTo(rawMsg []byte) []byte {
+func ensureReplyTo(rawMsg []byte, logger *Logger) []byte {
 	msg, err := mail.ReadMessage(bytes.NewReader(rawMsg))
 	if err != nil {
+		if logger != nil {
+			logger.Debug("Failed to parse message for Reply-To injection: %v", err)
+		}
 		return rawMsg
 	}
 

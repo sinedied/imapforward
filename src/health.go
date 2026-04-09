@@ -13,8 +13,14 @@ type HealthResponse struct {
 	Sources []ForwarderStatus `json:"sources"`
 }
 
+// HealthServer wraps an http.Server and exposes the listener address.
+type HealthServer struct {
+	*http.Server
+	Addr string
+}
+
 // StartHealthServer creates and starts the HTTP health check server.
-func StartHealthServer(manager *Manager, port int) *http.Server {
+func StartHealthServer(manager *Manager, port int) *HealthServer {
 	log := newLogger("health")
 
 	mux := http.NewServeMux()
@@ -42,24 +48,24 @@ func StartHealthServer(manager *Manager, port int) *http.Server {
 		}
 	})
 
-	addr := fmt.Sprintf(":%d", port)
+	listenAddr := fmt.Sprintf(":%d", port)
 	server := &http.Server{
-		Addr:    addr,
 		Handler: mux,
 	}
 
-	listener, err := net.Listen("tcp", addr)
+	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		log.Error("Failed to start health server: %v", err)
-		return server
+		return &HealthServer{Server: server, Addr: listenAddr}
 	}
 
-	log.Info("Health check server listening on port %d", port)
+	actualAddr := listener.Addr().String()
+	log.Info("Health check server listening on %s", actualAddr)
 	go func() {
 		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			log.Error("Health server error: %v", err)
 		}
 	}()
 
-	return server
+	return &HealthServer{Server: server, Addr: actualAddr}
 }
