@@ -30,15 +30,14 @@ func (m *Manager) StartAll(ctx context.Context) {
 		source := m.config.Sources[i]
 
 		var sender Sender
-		dial := IMAPDialFunc(DefaultIMAPDial)
 
 		if m.config.ForwardMethod == "smtp" {
 			sender = NewSMTPSender(m.config.Target)
 		} else {
-			sender = NewIMAPSender(m.config.Target, dial)
+			sender = NewIMAPSender(m.config.Target, DefaultIMAPDial)
 		}
 
-		fwd := NewForwarder(source, sender, dial, func(status ForwarderStatus) {
+		fwd := NewForwarder(source, sender, func(status ForwarderStatus) {
 			m.statuses.Store(status.Name, status)
 		})
 		m.forwarders = append(m.forwarders, fwd)
