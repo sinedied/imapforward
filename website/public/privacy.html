@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — imapforward</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1.5rem; color: #e4e4e4; background: #0f0f0f; line-height: 1.7; }
+    h1 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; }
+    a { color: #60a5fa; }
+    .meta { color: #888; font-size: 0.85rem; margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: April 9, 2026</p>
+
+  <h2>1. Overview</h2>
+  <p>imapforward is a self-hosted, open-source email forwarding tool. It runs entirely on your own infrastructure. We do not operate any servers that process your data.</p>
+
+  <h2>2. Data Collection</h2>
+  <p>The Software does <strong>not</strong> collect, store, transmit, or share any personal data with the authors or any third party. All email data is processed locally on the machine where you run the Software.</p>
+
+  <h2>3. Credentials</h2>
+  <p>Email account credentials and OAuth2 tokens are stored exclusively in your local configuration file. They are never sent anywhere other than to the email providers you configure (IMAP/SMTP servers or the Gmail API).</p>
+
+  <h2>4. Gmail API Usage</h2>
+  <p>When using the Gmail API forwarding method, the Software accesses your Gmail account using OAuth2 credentials that you create and control. The Software:</p>
+  <ul>
+    <li>Only requests the minimum required permissions (<code>gmail.insert</code> and <code>gmail.labels</code>)</li>
+    <li>Only imports messages into your mailbox and manages labels</li>
+    <li>Does not read, delete, or modify existing emails in your account</li>
+    <li>Does not share your data with any third party</li>
+  </ul>
+  <p>Google's own privacy practices are described in the <a href="https://policies.google.com/privacy" rel="noopener noreferrer">Google Privacy Policy</a>.</p>
+
+  <h2>5. Website</h2>
+  <p>The imapforward website (<a href="https://sinedied.github.io/imapforward">sinedied.github.io/imapforward</a>) is a static site hosted on GitHub Pages. It does not use cookies, analytics, or tracking of any kind. The configuration generator runs entirely in your browser — no data is sent to any server.</p>
+
+  <h2>6. Changes</h2>
+  <p>This policy may be updated at any time. Changes will be reflected on this page with an updated date.</p>
+
+  <h2>7. Contact</h2>
+  <p>For questions regarding this policy, open an issue on the <a href="https://github.com/sinedied/imapforward/issues" rel="noopener noreferrer">GitHub repository</a>.</p>
+
+  <p><a href="/">← Back to imapforward</a></p>
+</body>
+</html>
