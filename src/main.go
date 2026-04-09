@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-var version = "dev"
+var version = "1.1.0"
 
 func main() {
 	configPath := flag.String("config", "config.json", "Path to config file")

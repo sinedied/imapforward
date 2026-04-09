@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/sinedied/imapforward/compare/1.0.0...1.1.0) (2026-04-09)
+
+
+### Bug Fixes
+
+* website logo ([d6bdbfd](https://github.com/sinedied/imapforward/commit/d6bdbfd6f9dd0c213e01ea15880062c90ca227c0))
+
+
+### Features
+
+* add target folder configuration for email sources ([86d1420](https://github.com/sinedied/imapforward/commit/86d1420cbce8bcace4b12d965919bc4d52aeea93))
+* rewrite project to go and add smtp forwarder option ([a0c80c9](https://github.com/sinedied/imapforward/commit/a0c80c999cf7d2653e74a96bbaa857a7b1ed4a83))
+
 # 1.0.0 (2026-02-26)
 
 
