@@ -160,6 +160,14 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
                             placeholder="INBOX, Important" />
                           <span class="hint">Comma-separated list</span>
                         </div>
+                        <div class="field">
+                          <label [for]="'s-targetFolder-' + i">Target Folder</label>
+                          <input [id]="'s-targetFolder-' + i" formControlName="targetFolder"
+                            placeholder="Import/Work" />
+                          <span class="hint">Override target mailbox for this source (IMAP only)</span>
+                        </div>
+                      </div>
+                      <div class="form-row">
                         <div class="field field-xs">
                           <label class="toggle-label">
                             <input type="checkbox" formControlName="deleteAfterForward" />
@@ -635,6 +643,7 @@ export class ConfigTool {
         },
         folders: this.parseFolders(s?.folders as string),
         deleteAfterForward: s?.deleteAfterForward ?? false,
+        ...((s as any)?.targetFolder ? {targetFolder: (s as any).targetFolder} : {}),
       })),
     };
 
@@ -661,6 +670,7 @@ export class ConfigTool {
       }),
       folders: ['INBOX'],
       deleteAfterForward: [false],
+      targetFolder: [''],
     });
   }
 
