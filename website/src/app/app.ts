@@ -47,9 +47,9 @@ import {ConfigTool} from './components/config-tool';
           <span class="sep">&middot;</span>
           <a href="https://github.com/sinedied/imapforward/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
           <span class="sep">&middot;</span>
-          <a href="/terms.html">Terms</a>
+          <a href="terms.html">Terms</a>
           <span class="sep">&middot;</span>
-          <a href="/privacy.html">Privacy</a>
+          <a href="privacy.html">Privacy</a>
         </span>
       </div>
     </footer>
