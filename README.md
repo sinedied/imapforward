@@ -84,7 +84,7 @@ Create a `config.json` file. You can use the [online configuration generator](ht
 | `target.secure` | boolean | no | port-based | Use TLS (defaults to `true` for ports 465/993) |
 | `target.auth.user` | string | yes | — | Username (also used as SMTP sender/recipient) |
 | `target.auth.pass` | string | yes | — | Password or app password |
-| `target.folder` | string | no | `"INBOX"` | Target mailbox folder (IMAP method only) |
+| `target.folder` | string | no | `"INBOX"` | Default target mailbox folder (IMAP method only). Auto-created if it doesn't exist |
 | `forwardMethod` | string | no | `"imap"` | Forwarding method: `"imap"` (APPEND) or `"smtp"` |
 | `sources[].name` | string | yes | — | Display name for the source |
 | `sources[].host` | string | yes | — | IMAP server hostname |
@@ -94,6 +94,7 @@ Create a `config.json` file. You can use the [online configuration generator](ht
 | `sources[].auth.pass` | string | yes | — | IMAP password |
 | `sources[].folders` | string[] | no | `["INBOX"]` | Folders to monitor |
 | `sources[].deleteAfterForward` | boolean | no | `false` | Delete messages after forwarding |
+| `sources[].targetFolder` | string | no | — | Target mailbox for this source. Falls back to `target.folder`. Auto-created if it doesn't exist |
 | `healthCheck.port` | number | no | `8080` | HTTP health check server port |
 
 > [!TIP]

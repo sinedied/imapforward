@@ -168,6 +168,34 @@ func TestValidateConfig_CustomHealthPort(t *testing.T) {
 	}
 }
 
+func TestValidateConfig_TargetFolder(t *testing.T) {
+	c := &Config{
+		Target: TargetConfig{Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}},
+		Sources: []SourceConfig{
+			{Name: "S", Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}, TargetFolder: "Import/Work"},
+		},
+	}
+	if err := validateConfig(c); err != nil {
+		t.Fatal(err)
+	}
+	if c.Sources[0].TargetFolder != "Import/Work" {
+		t.Errorf("expected targetFolder 'Import/Work', got %q", c.Sources[0].TargetFolder)
+	}
+}
+
+func TestValidateConfig_TargetFolderEmpty(t *testing.T) {
+	c := &Config{
+		Target:  TargetConfig{Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}},
+		Sources: []SourceConfig{{Name: "S", Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}}},
+	}
+	if err := validateConfig(c); err != nil {
+		t.Fatal(err)
+	}
+	if c.Sources[0].TargetFolder != "" {
+		t.Errorf("expected empty targetFolder, got %q", c.Sources[0].TargetFolder)
+	}
+}
+
 func TestValidateConfig_SMTPMethod(t *testing.T) {
 	c := &Config{
 		Target:        TargetConfig{Host: "smtp.gmail.com", Port: 587, Auth: Auth{User: "u", Pass: "p"}},

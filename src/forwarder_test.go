@@ -119,7 +119,7 @@ type mockSender struct {
 	err    error
 }
 
-func (m *mockSender) Send(ctx context.Context, rawMessage []byte) error {
+func (m *mockSender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
 	if m.err != nil {
 		return m.err
 	}

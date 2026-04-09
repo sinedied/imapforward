@@ -37,6 +37,7 @@ type IMAPClient interface {
 	Idle() (*imapclient.IdleCommand, error)
 	List(ref string, pattern string, options *imap.ListOptions) *imapclient.ListCommand
 	Append(mailbox string, size int64, options *imap.AppendOptions) *imapclient.AppendCommand
+	Create(mailbox string, options *imap.CreateOptions) *imapclient.Command
 	Expunge() *imapclient.ExpungeCommand
 }
 
@@ -377,7 +378,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, client *imapclient.Clien
 		return fmt.Errorf("no body section in response")
 	}
 
-	if err := f.sender.Send(ctx, rawMessage); err != nil {
+	if err := f.sender.Send(ctx, rawMessage, f.source.TargetFolder); err != nil {
 		return fmt.Errorf("send: %w", err)
 	}
 

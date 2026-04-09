@@ -7,38 +7,51 @@ import (
 	"fmt"
 	"net/mail"
 	"net/smtp"
+
+	"github.com/emersion/go-imap/v2"
 )
 
 // Sender is the interface for forwarding email messages to a target.
 type Sender interface {
-	Send(ctx context.Context, rawMessage []byte) error
+	Send(ctx context.Context, rawMessage []byte, targetFolder string) error
 	Close() error
 }
 
 // IMAPSender forwards messages by appending them to a target IMAP mailbox.
 type IMAPSender struct {
-	target TargetConfig
-	logger *Logger
-	dial   IMAPDialFunc
-	client IMAPClient
+	target         TargetConfig
+	logger         *Logger
+	dial           IMAPDialFunc
+	client         IMAPClient
+	ensuredFolders map[string]bool
 }
 
 // NewIMAPSender creates a new IMAP append sender.
 func NewIMAPSender(target TargetConfig, dial IMAPDialFunc) *IMAPSender {
 	return &IMAPSender{
-		target: target,
-		logger: newLogger("imap-sender"),
-		dial:   dial,
+		target:         target,
+		logger:         newLogger("imap-sender"),
+		dial:           dial,
+		ensuredFolders: make(map[string]bool),
 	}
 }
 
-func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte) error {
+func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
 	c, err := s.getClient()
 	if err != nil {
 		return fmt.Errorf("connect to target: %w", err)
 	}
 
-	appendCmd := c.Append(s.target.Folder, int64(len(rawMessage)), nil)
+	folder := targetFolder
+	if folder == "" {
+		folder = s.target.Folder
+	}
+
+	if err := s.ensureFolder(c, folder); err != nil {
+		return fmt.Errorf("ensure target folder %q: %w", folder, err)
+	}
+
+	appendCmd := c.Append(folder, int64(len(rawMessage)), nil)
 	if _, err := appendCmd.Write(rawMessage); err != nil {
 		return fmt.Errorf("write append data: %w", err)
 	}
@@ -67,6 +80,7 @@ func (s *IMAPSender) getClient() (IMAPClient, error) {
 		case <-s.client.Closed():
 			s.logger.Warn("Target connection lost, reconnecting")
 			s.client = nil
+			s.ensuredFolders = make(map[string]bool)
 		default:
 			return s.client, nil
 		}
@@ -83,8 +97,30 @@ func (s *IMAPSender) getClient() (IMAPClient, error) {
 	}
 
 	s.client = c
+	s.ensuredFolders = make(map[string]bool)
 	s.logger.Info("Connected to target %s:%d", s.target.Host, s.target.Port)
 	return c, nil
+}
+
+func (s *IMAPSender) ensureFolder(c IMAPClient, folder string) error {
+	if folder == "INBOX" || s.ensuredFolders[folder] {
+		return nil
+	}
+
+	if err := c.Create(folder, nil).Wait(); err != nil {
+		// ALREADYEXISTS is expected — the folder may already exist
+		// go-imap returns an *imap.Error with the ALREADYEXISTS response code
+		if imapErr, ok := err.(*imap.Error); ok && imapErr.Code == imap.ResponseCodeAlreadyExists {
+			s.logger.Debug("Target folder %q already exists", folder)
+		} else {
+			return err
+		}
+	} else {
+		s.logger.Info("Created target folder: %s", folder)
+	}
+
+	s.ensuredFolders[folder] = true
+	return nil
 }
 
 // SMTPSender forwards messages via SMTP with header preservation.
@@ -101,7 +137,7 @@ func NewSMTPSender(target TargetConfig) *SMTPSender {
 	}
 }
 
-func (s *SMTPSender) Send(ctx context.Context, rawMessage []byte) error {
+func (s *SMTPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
 	modified := ensureReplyTo(rawMessage, s.logger)
 
 	addr := fmt.Sprintf("%s:%d", s.target.Host, s.target.Port)

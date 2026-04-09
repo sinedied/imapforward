@@ -59,3 +59,4 @@ A task is only complete when `go build`, `go vet`, and `go test` all pass.
 - Concurrent folder monitoring (one IMAP connection per folder)
 - Co-located test files (`*_test.go` next to source files)
 - Minimal dependencies — use Go standard library when possible
+- Any config or feature change **must** also update `README.md`, `config.example.json`, and the website config editor (`website/src/app/components/config-tool.ts`) and setup guide (`website/src/app/components/setup.ts`)
