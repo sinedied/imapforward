@@ -168,6 +168,75 @@ func TestValidateConfig_CustomHealthPort(t *testing.T) {
 	}
 }
 
+func TestValidateConfig_GmailAPIMethod(t *testing.T) {
+	c := &Config{
+		Target:        TargetConfig{Auth: Auth{User: "u@gmail.com"}},
+		ForwardMethod: "gmail-api",
+		GmailAPI:      &GmailAPIConfig{ClientID: "cid", ClientSecret: "cs", RefreshToken: "rt"},
+		Sources:       []SourceConfig{{Name: "S", Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}}},
+	}
+	if err := validateConfig(c); err != nil {
+		t.Fatal(err)
+	}
+	if c.ForwardMethod != "gmail-api" {
+		t.Errorf("expected gmail-api, got %q", c.ForwardMethod)
+	}
+}
+
+func TestValidateConfig_GmailAPIMissingConfig(t *testing.T) {
+	c := &Config{
+		Target:        TargetConfig{Auth: Auth{User: "u@gmail.com"}},
+		ForwardMethod: "gmail-api",
+		Sources:       []SourceConfig{{Name: "S", Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}}},
+	}
+	err := validateConfig(c)
+	if err == nil {
+		t.Fatal("expected error for missing gmailApi config")
+	}
+}
+
+func TestValidateConfig_GmailAPIMissingFields(t *testing.T) {
+	tests := []struct {
+		name   string
+		config GmailAPIConfig
+		want   string
+	}{
+		{"missing clientId", GmailAPIConfig{ClientSecret: "cs", RefreshToken: "rt"}, "gmailApi.clientId"},
+		{"missing clientSecret", GmailAPIConfig{ClientID: "cid", RefreshToken: "rt"}, "gmailApi.clientSecret"},
+		{"missing refreshToken", GmailAPIConfig{ClientID: "cid", ClientSecret: "cs"}, "gmailApi.refreshToken"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Config{
+				Target:        TargetConfig{Auth: Auth{User: "u@gmail.com"}},
+				ForwardMethod: "gmail-api",
+				GmailAPI:      &tt.config,
+				Sources:       []SourceConfig{{Name: "S", Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}}},
+			}
+			err := validateConfig(c)
+			if err == nil {
+				t.Fatal("expected error")
+			}
+			if !contains(err.Error(), tt.want) {
+				t.Errorf("expected error containing %q, got %q", tt.want, err.Error())
+			}
+		})
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstr(s, substr))
+}
+
+func containsSubstr(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
 func TestValidateConfig_TargetFolder(t *testing.T) {
 	c := &Config{
 		Target: TargetConfig{Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}},
@@ -295,7 +364,7 @@ func TestValidateConfig_Errors(t *testing.T) {
 				Sources:       []SourceConfig{{Name: "S", Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}}},
 				ForwardMethod: "invalid",
 			},
-			want: `forwardMethod must be "imap" or "smtp"`,
+			want: `forwardMethod must be "imap", "smtp", or "gmail-api"`,
 		},
 	}
 

@@ -38,10 +38,18 @@ type HealthCheckConfig struct {
 	Port int `json:"port,omitempty"`
 }
 
+// GmailAPIConfig holds OAuth2 credentials for the Gmail API forwarding method.
+type GmailAPIConfig struct {
+	ClientID     string `json:"clientId"`
+	ClientSecret string `json:"clientSecret"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 // Config is the top-level application configuration.
 type Config struct {
 	Target        TargetConfig      `json:"target"`
 	ForwardMethod string            `json:"forwardMethod,omitempty"`
+	GmailAPI      *GmailAPIConfig   `json:"gmailApi,omitempty"`
 	Sources       []SourceConfig    `json:"sources"`
 	HealthCheck   HealthCheckConfig `json:"healthCheck,omitempty"`
 }
@@ -57,32 +65,54 @@ func boolPtr(b bool) *bool {
 }
 
 func validateConfig(c *Config) error {
-	// Target
-	if c.Target.Host == "" {
-		return fmt.Errorf("target.host must be a non-empty string")
-	}
-	if c.Target.Port <= 0 {
-		return fmt.Errorf("target.port must be a positive integer")
-	}
-	if c.Target.Secure == nil {
-		c.Target.Secure = boolPtr(isImplicitTLS(c.Target.Port))
-	}
-	if c.Target.Folder == "" {
-		c.Target.Folder = "INBOX"
-	}
-	if c.Target.Auth.User == "" {
-		return fmt.Errorf("target.auth.user must be a non-empty string")
-	}
-	if c.Target.Auth.Pass == "" {
-		return fmt.Errorf("target.auth.pass must be a non-empty string")
-	}
-
 	// Forward method
 	if c.ForwardMethod == "" {
 		c.ForwardMethod = "imap"
 	}
-	if c.ForwardMethod != "imap" && c.ForwardMethod != "smtp" {
-		return fmt.Errorf("forwardMethod must be \"imap\" or \"smtp\"")
+	if c.ForwardMethod != "imap" && c.ForwardMethod != "smtp" && c.ForwardMethod != "gmail-api" {
+		return fmt.Errorf("forwardMethod must be \"imap\", \"smtp\", or \"gmail-api\"")
+	}
+
+	// Target — gmail-api only needs auth.user
+	if c.ForwardMethod == "gmail-api" {
+		if c.Target.Auth.User == "" {
+			return fmt.Errorf("target.auth.user must be a non-empty string")
+		}
+	} else {
+		if c.Target.Host == "" {
+			return fmt.Errorf("target.host must be a non-empty string")
+		}
+		if c.Target.Port <= 0 {
+			return fmt.Errorf("target.port must be a positive integer")
+		}
+		if c.Target.Secure == nil {
+			c.Target.Secure = boolPtr(isImplicitTLS(c.Target.Port))
+		}
+		if c.Target.Auth.User == "" {
+			return fmt.Errorf("target.auth.user must be a non-empty string")
+		}
+		if c.Target.Auth.Pass == "" {
+			return fmt.Errorf("target.auth.pass must be a non-empty string")
+		}
+	}
+	if c.Target.Folder == "" {
+		c.Target.Folder = "INBOX"
+	}
+
+	// Gmail API config
+	if c.ForwardMethod == "gmail-api" {
+		if c.GmailAPI == nil {
+			return fmt.Errorf("gmailApi config is required when forwardMethod is \"gmail-api\"")
+		}
+		if c.GmailAPI.ClientID == "" {
+			return fmt.Errorf("gmailApi.clientId must be a non-empty string")
+		}
+		if c.GmailAPI.ClientSecret == "" {
+			return fmt.Errorf("gmailApi.clientSecret must be a non-empty string")
+		}
+		if c.GmailAPI.RefreshToken == "" {
+			return fmt.Errorf("gmailApi.refreshToken must be a non-empty string")
+		}
 	}
 
 	// Sources
