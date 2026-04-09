@@ -254,7 +254,13 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
     .form-panel {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1rem;
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
     }
 
     fieldset {
@@ -294,7 +300,7 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
       flex: 1;
       min-width: 140px;
 
-      label:not(.toggle-label) {
+      label:not(.toggle-label):not(.radio-label) {
         display: block;
         font-size: 0.8rem;
         color: var(--text-secondary);
@@ -365,7 +371,7 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
     .radio-label {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
       cursor: pointer;
       font-size: 0.85rem;
       color: var(--text-secondary);
@@ -374,6 +380,9 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
       input[type="radio"] {
         accent-color: var(--accent);
         margin: 0;
+        width: 0.95rem;
+        height: 0.95rem;
+        flex-shrink: 0;
       }
     }
 
@@ -488,6 +497,7 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
     /* --- Preview Panel --- */
     .preview-panel {
       position: relative;
+      padding-top: 0.6rem;
     }
 
     .preview-sticky {
@@ -605,8 +615,22 @@ export class ConfigTool {
       folder: ['INBOX'],
     }),
     sources: this.fb.array([this.createSource()]),
-
   });
+
+  constructor() {
+    this.form.get('forwardMethod')?.valueChanges.subscribe((method) => {
+      const target = this.form.get('target')!;
+      if (method === 'smtp') {
+        target.get('host')?.setValue('smtp.gmail.com');
+        target.get('port')?.setValue(587);
+        target.get('secure')?.setValue(true);
+      } else {
+        target.get('host')?.setValue('imap.gmail.com');
+        target.get('port')?.setValue(993);
+        target.get('secure')?.setValue(true);
+      }
+    });
+  }
 
   private readonly formValue = toSignal(
     this.form.valueChanges.pipe(startWith(this.form.getRawValue())),
