@@ -11,3 +11,4 @@ config.json
 website/
 src/*_test.go
 justfile
+dist/

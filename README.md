@@ -31,7 +31,7 @@ Built to replace deprecated [gmailify](https://support.google.com/mail/answer/76
 
 ### Binary
 
-Download from [GitHub Releases](https://github.com/sinedied/imapforward/releases), or build from source:
+Download the binary for your platform from [GitHub Releases](https://github.com/sinedied/imapforward/releases) (Linux, macOS, Windows), or build from source:
 
 ```bash
 go install github.com/sinedied/imapforward@latest

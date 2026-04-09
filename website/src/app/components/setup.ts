@@ -14,7 +14,7 @@ import {ScrollAnimate} from '../directives/scroll-animate';
             <div class="step-number">1</div>
             <div class="step-content">
               <h3>Install</h3>
-              <p>Download a binary from <a href="https://github.com/sinedied/imapforward/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a>, or pull the Docker image:</p>
+              <p>Download a binary for your platform (Linux, macOS, Windows) from <a href="https://github.com/sinedied/imapforward/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a>, or pull the Docker image:</p>
               <div class="code-block">
                 <pre><code>docker pull ghcr.io/sinedied/imapforward:latest</code></pre>
               </div>
