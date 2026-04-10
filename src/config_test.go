@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -217,24 +218,11 @@ func TestValidateConfig_GmailAPIMissingFields(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error")
 			}
-			if !contains(err.Error(), tt.want) {
+			if !strings.Contains(err.Error(), tt.want) {
 				t.Errorf("expected error containing %q, got %q", tt.want, err.Error())
 			}
 		})
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstr(s, substr))
-}
-
-func containsSubstr(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 func TestValidateConfig_TargetFolder(t *testing.T) {
