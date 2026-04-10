@@ -60,14 +60,16 @@ func (s *GmailAPISender) Send(ctx context.Context, rawMessage []byte, targetFold
 
 	importURL := gmailImportURL + "?uploadType=multipart&internalDateSource=dateHeader&neverMarkSpam=false"
 
-	// Build label list — always include INBOX, add targetFolder as extra label
-	labelIDs := []string{"INBOX"}
+	// Build label list — UNREAD always, INBOX only when no custom target folder
+	labelIDs := []string{"UNREAD"}
 	if targetFolder != "" && targetFolder != "INBOX" {
 		labelID, err := s.ensureLabel(ctx, token, targetFolder)
 		if err != nil {
 			return fmt.Errorf("ensure label %q: %w", targetFolder, err)
 		}
 		labelIDs = append(labelIDs, labelID)
+	} else {
+		labelIDs = append(labelIDs, "INBOX")
 	}
 	metadata, err := json.Marshal(map[string]interface{}{"labelIds": labelIDs})
 	if err != nil {
