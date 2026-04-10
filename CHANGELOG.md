@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/sinedied/imapforward/compare/1.1.1...1.2.0) (2026-04-10)
+
+
+### Bug Fixes
+
+* label handling ([6e7ca4e](https://github.com/sinedied/imapforward/commit/6e7ca4ea79e56df34be4ae95bdbf2435cda0ca36))
+
+
+### Features
+
+* add Gmail API forwarding method with OAuth2 support ([849e8bc](https://github.com/sinedied/imapforward/commit/849e8bcd773c8e2c1b1d4ca32848504446740a0f))
+
 ## [1.1.1](https://github.com/sinedied/imapforward/compare/1.1.0...1.1.1) (2026-04-09)
 
 
