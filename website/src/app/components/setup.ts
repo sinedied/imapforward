@@ -58,6 +58,8 @@ import {ScrollAnimate} from '../directives/scroll-animate';
                 <tr><td><code>-config</code></td><td>Path to config file</td></tr>
                 <tr><td><code>-log-level</code></td><td>Log level (debug, info, warn, error)</td></tr>
                 <tr><td><code>-auth</code></td><td>Run OAuth2 flow for Gmail API token</td></tr>
+                <tr><td><code>-auth-client-id</code></td><td>OAuth2 client ID (required with -auth)</td></tr>
+                <tr><td><code>-auth-client-secret</code></td><td>OAuth2 client secret (required with -auth)</td></tr>
                 <tr><td><code>-version</code></td><td>Show version</td></tr>
                 <tr><td><code>-help</code></td><td>Show help</td></tr>
               </tbody>

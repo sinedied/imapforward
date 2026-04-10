@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,34 +20,41 @@ import (
 )
 
 const (
-	gmailImportURL = "https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/import"
-	gmailLabelsURL = "https://gmail.googleapis.com/gmail/v1/users/me/labels"
-	tokenURL       = "https://oauth2.googleapis.com/token"
-	authURL        = "https://accounts.google.com/o/oauth2/v2/auth"
-	gmailScope     = "https://www.googleapis.com/auth/gmail.insert https://www.googleapis.com/auth/gmail.labels"
+	defaultGmailImportURL = "https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/import"
+	defaultGmailLabelsURL = "https://gmail.googleapis.com/gmail/v1/users/me/labels"
+	defaultTokenURL       = "https://oauth2.googleapis.com/token"
+	authURL               = "https://accounts.google.com/o/oauth2/v2/auth"
+	gmailScope            = "https://www.googleapis.com/auth/gmail.insert https://www.googleapis.com/auth/gmail.labels"
+	oauthTimeout          = 5 * time.Minute
 )
 
 // GmailAPISender forwards messages via the Gmail API messages.import endpoint.
 // This method preserves original headers AND runs spam/phishing filters.
 type GmailAPISender struct {
-	mu          sync.Mutex
-	config      GmailAPIConfig
-	userEmail   string
-	logger      *Logger
-	httpClient  *http.Client
-	accessToken string
-	tokenExpiry time.Time
-	labelCache  map[string]string // label name → label ID
+	mu             sync.Mutex
+	config         GmailAPIConfig
+	userEmail      string
+	logger         *Logger
+	httpClient     *http.Client
+	accessToken    string
+	tokenExpiry    time.Time
+	labelCache     map[string]string // label name → label ID
+	gmailImportURL string
+	gmailLabelsURL string
+	tokenURL       string
 }
 
 // NewGmailAPISender creates a new Gmail API sender.
 func NewGmailAPISender(config GmailAPIConfig, userEmail string) *GmailAPISender {
 	return &GmailAPISender{
-		config:     config,
-		userEmail:  userEmail,
-		logger:     newLogger("gmail-api"),
-		httpClient: &http.Client{Timeout: 30 * time.Second},
-		labelCache: make(map[string]string),
+		config:         config,
+		userEmail:      userEmail,
+		logger:         newLogger("gmail-api"),
+		httpClient:     &http.Client{Timeout: 30 * time.Second},
+		labelCache:     make(map[string]string),
+		gmailImportURL: defaultGmailImportURL,
+		gmailLabelsURL: defaultGmailLabelsURL,
+		tokenURL:       defaultTokenURL,
 	}
 }
 
@@ -58,7 +67,7 @@ func (s *GmailAPISender) Send(ctx context.Context, rawMessage []byte, targetFold
 		return fmt.Errorf("get access token: %w", err)
 	}
 
-	importURL := gmailImportURL + "?uploadType=multipart&internalDateSource=dateHeader&neverMarkSpam=false"
+	importURL := s.gmailImportURL + "?uploadType=multipart&internalDateSource=dateHeader&neverMarkSpam=false"
 
 	// Build label list — UNREAD always, INBOX only when no custom target folder
 	labelIDs := []string{"UNREAD"}
@@ -139,7 +148,7 @@ func (s *GmailAPISender) ensureLabel(ctx context.Context, token, labelName strin
 	}
 
 	// List existing labels to find a match
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, gmailLabelsURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.gmailLabelsURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("create list labels request: %w", err)
 	}
@@ -175,8 +184,11 @@ func (s *GmailAPISender) ensureLabel(ctx context.Context, token, labelName strin
 
 	// Label not found — create it
 	s.logger.Info("Creating Gmail label: %s", labelName)
-	createBody, _ := json.Marshal(map[string]string{"name": labelName})
-	createReq, err := http.NewRequestWithContext(ctx, http.MethodPost, gmailLabelsURL, bytes.NewReader(createBody))
+	createBody, err := json.Marshal(map[string]string{"name": labelName})
+	if err != nil {
+		return "", fmt.Errorf("marshal label create payload: %w", err)
+	}
+	createReq, err := http.NewRequestWithContext(ctx, http.MethodPost, s.gmailLabelsURL, bytes.NewReader(createBody))
 	if err != nil {
 		return "", fmt.Errorf("create label request: %w", err)
 	}
@@ -222,7 +234,7 @@ func (s *GmailAPISender) getAccessToken(ctx context.Context) (string, error) {
 		"grant_type":    {"refresh_token"},
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, bytes.NewBufferString(data.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.tokenURL, bytes.NewBufferString(data.Encode()))
 	if err != nil {
 		return "", fmt.Errorf("create token request: %w", err)
 	}
@@ -248,8 +260,13 @@ func (s *GmailAPISender) getAccessToken(ctx context.Context) (string, error) {
 	}
 
 	s.accessToken = tokenResp.AccessToken
-	// Refresh 60s before expiry to avoid edge-case failures
-	s.tokenExpiry = time.Now().Add(time.Duration(tokenResp.ExpiresIn-60) * time.Second)
+	// Refresh 60s before expiry to avoid edge-case failures.
+	// Clamp at zero so very short-lived tokens do not appear immediately expired.
+	refreshIn := tokenResp.ExpiresIn - 60
+	if refreshIn < 0 {
+		refreshIn = 0
+	}
+	s.tokenExpiry = time.Now().Add(time.Duration(refreshIn) * time.Second)
 	s.logger.Debug("Access token refreshed, expires in %ds", tokenResp.ExpiresIn)
 
 	return s.accessToken, nil
@@ -261,12 +278,24 @@ func (s *GmailAPISender) getAccessToken(ctx context.Context) (string, error) {
 func RunOAuthFlow(clientID, clientSecret string) error {
 	log := newLogger("auth")
 
+	// Generate random state for CSRF protection
+	stateBytes := make([]byte, 16)
+	if _, err := rand.Read(stateBytes); err != nil {
+		return fmt.Errorf("generate state: %w", err)
+	}
+	state := hex.EncodeToString(stateBytes)
+
 	// Start local server to receive the callback
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("state") != state {
+			_, _ = fmt.Fprint(w, "Authorization failed: invalid state parameter.\nYou can close this window.")
+			errCh <- fmt.Errorf("invalid OAuth state — possible CSRF")
+			return
+		}
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			errMsg := r.URL.Query().Get("error")
@@ -305,6 +334,7 @@ func RunOAuthFlow(clientID, clientSecret string) error {
 		"scope":         {gmailScope},
 		"access_type":   {"offline"},
 		"prompt":        {"consent"},
+		"state":         {state},
 	}
 	authorizationURL := authURL + "?" + authParams.Encode()
 
@@ -316,13 +346,15 @@ func RunOAuthFlow(clientID, clientSecret string) error {
 
 	_ = openBrowser(authorizationURL)
 
-	// Wait for callback
+	// Wait for callback (with timeout)
 	log.Info("Waiting for authorization callback on port %d...", port)
 	var code string
 	select {
 	case code = <-codeCh:
 	case err := <-errCh:
 		return err
+	case <-time.After(oauthTimeout):
+		return fmt.Errorf("authorization timed out after %v — no callback received", oauthTimeout)
 	}
 
 	// Exchange code for tokens
@@ -334,7 +366,7 @@ func RunOAuthFlow(clientID, clientSecret string) error {
 		"redirect_uri":  {redirectURI},
 	}
 
-	resp, err := http.PostForm(tokenURL, data)
+	resp, err := http.PostForm(defaultTokenURL, data)
 	if err != nil {
 		return fmt.Errorf("token exchange: %w", err)
 	}
