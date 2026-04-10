@@ -118,7 +118,7 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
                         <label for="t-refresh-token">Refresh Token *</label>
                         <input id="t-refresh-token" type="password" formControlName="refreshToken"
                           placeholder="your-refresh-token" autocomplete="off" />
-                        <span class="hint">Run <code>imapforward -auth</code> to obtain this token</span>
+                        <span class="hint">Run <code>imapforward -auth -auth-client-id &lt;ID&gt; -auth-client-secret &lt;SECRET&gt;</code></span>
                       </div>
                     </div>
                   </div>
@@ -663,17 +663,43 @@ export class ConfigTool {
   constructor() {
     this.form.get('forwardMethod')?.valueChanges.subscribe((method) => {
       const target = this.form.get('target')!;
-      if (method === 'smtp') {
-        target.get('host')?.setValue('smtp.gmail.com');
-        target.get('port')?.setValue(587);
-        target.get('secure')?.setValue(true);
-      } else if (method === 'gmail-api') {
-        // gmail-api doesn't use host/port
+      const pass = target.get('auth.pass')!;
+      const host = target.get('host')!;
+      const port = target.get('port')!;
+      const clientId = target.get('gmailApi.clientId')!;
+      const clientSecret = target.get('gmailApi.clientSecret')!;
+      const refreshToken = target.get('gmailApi.refreshToken')!;
+
+      if (method === 'gmail-api') {
+        pass.clearValidators();
+        host.clearValidators();
+        port.clearValidators();
+        clientId.setValidators(Validators.required);
+        clientSecret.setValidators(Validators.required);
+        refreshToken.setValidators(Validators.required);
       } else {
-        target.get('host')?.setValue('imap.gmail.com');
-        target.get('port')?.setValue(993);
-        target.get('secure')?.setValue(true);
+        pass.setValidators(Validators.required);
+        host.setValidators(Validators.required);
+        port.setValidators(Validators.required);
+        clientId.clearValidators();
+        clientSecret.clearValidators();
+        refreshToken.clearValidators();
+        if (method === 'smtp') {
+          host.setValue('smtp.gmail.com');
+          port.setValue(587);
+          target.get('secure')?.setValue(true);
+        } else {
+          host.setValue('imap.gmail.com');
+          port.setValue(993);
+          target.get('secure')?.setValue(true);
+        }
       }
+      pass.updateValueAndValidity();
+      host.updateValueAndValidity();
+      port.updateValueAndValidity();
+      clientId.updateValueAndValidity();
+      clientSecret.updateValueAndValidity();
+      refreshToken.updateValueAndValidity();
     });
   }
 
