@@ -253,6 +253,28 @@ func TestValidateConfig_TargetFolderEmpty(t *testing.T) {
 	}
 }
 
+func TestValidateConfig_TargetLabels(t *testing.T) {
+	c := &Config{
+		Target: TargetConfig{Host: "h", Port: 993, Auth: Auth{User: "u", Pass: "p"}},
+		Sources: []SourceConfig{
+			{
+				Name:         "S",
+				Host:         "h",
+				Port:         993,
+				Auth:         Auth{User: "u", Pass: "p"},
+				TargetFolder: "INBOX",
+				TargetLabels: []string{"Import/Work", "Import/Team"},
+			},
+		},
+	}
+	if err := validateConfig(c); err != nil {
+		t.Fatal(err)
+	}
+	if len(c.Sources[0].TargetLabels) != 2 {
+		t.Fatalf("expected targetLabels preserved, got %v", c.Sources[0].TargetLabels)
+	}
+}
+
 func TestValidateConfig_SMTPMethod(t *testing.T) {
 	c := &Config{
 		Target:        TargetConfig{Host: "smtp.gmail.com", Port: 587, Auth: Auth{User: "u", Pass: "p"}},

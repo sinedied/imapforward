@@ -14,7 +14,7 @@ import (
 
 // Sender is the interface for forwarding email messages to a target.
 type Sender interface {
-	Send(ctx context.Context, rawMessage []byte, targetFolder string) error
+	Send(ctx context.Context, rawMessage []byte, targetFolder string, targetLabels []string) error
 	Close() error
 }
 
@@ -38,7 +38,7 @@ func NewIMAPSender(target TargetConfig, dial IMAPDialFunc) *IMAPSender {
 	}
 }
 
-func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
+func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string, targetLabels []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -63,10 +63,12 @@ func (s *IMAPSender) Send(ctx context.Context, rawMessage []byte, targetFolder s
 	if err := appendCmd.Close(); err != nil {
 		return fmt.Errorf("close append: %w", err)
 	}
-	if _, err := appendCmd.Wait(); err != nil {
+	appendData, err := appendCmd.Wait()
+	if err != nil {
 		return fmt.Errorf("append wait: %w", err)
 	}
 
+	s.applyLabels(ctx, c, folder, appendData, targetLabels)
 	return nil
 }
 
@@ -111,24 +113,64 @@ func (s *IMAPSender) getClient() (IMAPClient, error) {
 }
 
 func (s *IMAPSender) ensureFolder(c IMAPClient, folder string) error {
-	if folder == "INBOX" || s.ensuredFolders[folder] {
+	if folder == "" || folder == "INBOX" || s.ensuredFolders[folder] {
 		return nil
 	}
 
-	if err := c.Create(folder, nil).Wait(); err != nil {
-		// ALREADYEXISTS is expected — the folder may already exist
-		// go-imap returns an *imap.Error with the ALREADYEXISTS response code
-		if imapErr, ok := err.(*imap.Error); ok && imapErr.Code == imap.ResponseCodeAlreadyExists {
-			s.logger.Debug("Target folder %q already exists", folder)
-		} else {
-			return err
+	for _, name := range orderedLabelsForCreation([]string{folder}) {
+		if name == "INBOX" || s.ensuredFolders[name] {
+			continue
 		}
-	} else {
-		s.logger.Info("Created target folder: %s", folder)
+		if err := c.Create(name, nil).Wait(); err != nil {
+			// ALREADYEXISTS is expected — the folder may already exist
+			// go-imap returns an *imap.Error with the ALREADYEXISTS response code
+			if imapErr, ok := err.(*imap.Error); ok && imapErr.Code == imap.ResponseCodeAlreadyExists {
+				s.logger.Debug("Target folder %q already exists", name)
+			} else {
+				return err
+			}
+		} else {
+			s.logger.Info("Created target folder: %s", name)
+		}
+		s.ensuredFolders[name] = true
+	}
+	return nil
+}
+
+func (s *IMAPSender) applyLabels(ctx context.Context, c IMAPClient, folder string, appendData *imap.AppendData, targetLabels []string) {
+	labels := normalizeTargetLabels(folder, targetLabels)
+	if len(labels) == 0 {
+		return
 	}
 
-	s.ensuredFolders[folder] = true
-	return nil
+	caps := c.Caps()
+	if caps == nil || !caps.Has(imap.Cap("X-GM-EXT-1")) {
+		s.logger.Warn("Target labels requested for %q, but target server does not advertise Gmail label support; skipping labels", folder)
+		return
+	}
+
+	if appendData == nil || appendData.UID == 0 {
+		s.logger.Warn("Target labels requested for %q, but append response did not include a UID; skipping labels", folder)
+		return
+	}
+
+	if _, err := c.Select(folder, nil).Wait(); err != nil {
+		s.logger.Warn("Failed to select target folder %q before applying labels: %v", folder, err)
+		return
+	}
+
+	uidSet := imap.UIDSetNum(appendData.UID)
+	for _, label := range orderedLabelsForCreation(labels) {
+		if err := s.ensureFolder(c, label); err != nil {
+			s.logger.Warn("Failed to ensure label %q: %v", label, err)
+			continue
+		}
+		if contains(labels, label) {
+			if _, err := c.Copy(uidSet, label).Wait(); err != nil {
+				s.logger.Warn("Failed to apply target label %q: %v", label, err)
+			}
+		}
+	}
 }
 
 // SMTPSender forwards messages via SMTP with header preservation.
@@ -145,7 +187,7 @@ func NewSMTPSender(target TargetConfig) *SMTPSender {
 	}
 }
 
-func (s *SMTPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
+func (s *SMTPSender) Send(ctx context.Context, rawMessage []byte, targetFolder string, targetLabels []string) error {
 	modified := ensureReplyTo(rawMessage, s.logger)
 
 	addr := fmt.Sprintf("%s:%d", s.target.Host, s.target.Port)
@@ -235,4 +277,13 @@ func detectLineEnding(data []byte) string {
 		return "\r\n"
 	}
 	return "\n"
+}
+
+func contains(items []string, want string) bool {
+	for _, item := range items {
+		if item == want {
+			return true
+		}
+	}
+	return false
 }

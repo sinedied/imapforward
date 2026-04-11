@@ -22,6 +22,7 @@ type SourceConfig struct {
 	Folders            []string `json:"folders,omitempty"`
 	DeleteAfterForward bool     `json:"deleteAfterForward,omitempty"`
 	TargetFolder       string   `json:"targetFolder,omitempty"`
+	TargetLabels       []string `json:"targetLabels,omitempty"`
 }
 
 // TargetConfig is the configuration for the target server (IMAP or SMTP).
