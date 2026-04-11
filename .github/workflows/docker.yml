@@ -22,6 +22,8 @@ jobs:
     if: >-
       github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion == 'success'
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -55,7 +57,17 @@ jobs:
           version="${{ steps.tag.outputs.version }}"
           echo "value=${version:-0.0.0-dev}" >> "$GITHUB_OUTPUT"
 
-      - uses: docker/build-push-action@v7
+      - name: Resolve artifact tag
+        id: artifact_tag
+        run: |
+          tag="${{ inputs.tag }}"
+          if [ -z "$tag" ] || [ "$tag" = "latest" ]; then
+            tag="$(date +%Y%m%d)"
+          fi
+          echo "value=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -65,3 +77,25 @@ jobs:
             APP_VERSION=${{ steps.version.outputs.value }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build local image for Synology artifact
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.artifact_tag.outputs.value }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.value }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Export Docker image archive
+        run: docker save -o imapforward-${{ steps.artifact_tag.outputs.value }}.tar $IMAGE_NAME:${{ steps.artifact_tag.outputs.value }}
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: imapforward-docker-image-${{ steps.artifact_tag.outputs.value }}
+          path: imapforward-${{ steps.artifact_tag.outputs.value }}.tar
+          if-no-files-found: error

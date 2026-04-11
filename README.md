@@ -96,6 +96,7 @@ Create a `config.json` file. You can use the [online configuration generator](ht
 | `sources[].folders` | string[] | no | `["INBOX"]` | Folders to monitor |
 | `sources[].deleteAfterForward` | boolean | no | `false` | Delete messages after forwarding |
 | `sources[].targetFolder` | string | no | — | Target mailbox for this source. Falls back to `target.folder`. Auto-created if it doesn't exist |
+| `sources[].targetLabels` | string[] | no | — | Additional labels to apply after import for Gmail-compatible IMAP targets or Gmail API forwarding |
 | `healthCheck.port` | number | no | `8080` | HTTP health check server port |
 
 > [!TIP]
@@ -112,6 +113,8 @@ imapforward supports three forwarding methods:
 ```
 
 Appends the raw RFC822 message directly to the target mailbox via IMAP. This preserves **all** original headers exactly — From, To, CC, Reply-To, Date, Message-ID, etc. Replies and Reply-All preserve the original sender and recipients. However, since messages bypass Gmail's intake pipeline, **spam filtering is not applied**.
+
+For Gmail-compatible IMAP targets, you can keep the message in `INBOX` and add extra labels with `sources[].targetLabels`. The message is appended to the primary folder first, then additional labels are applied when the target server advertises Gmail label support. If labels are not supported, forwarding still succeeds and the labels are skipped with a warning.
 
 #### SMTP Forward
 

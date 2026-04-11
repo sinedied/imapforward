@@ -29,6 +29,10 @@ import {ScrollAnimate} from '../directives/scroll-animate';
                 Create a <code>config.json</code> file with your target and source IMAP accounts.
                 Use the <a href="#config">configuration generator</a> below to build it interactively.
               </p>
+              <p>
+                For Gmail imports, you can keep messages in <code>INBOX</code> and apply extra labels with
+                <code>sources[].targetLabels</code>.
+              </p>
             </div>
           </div>
 
