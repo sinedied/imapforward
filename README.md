@@ -15,7 +15,7 @@ Built to replace deprecated [gmailify](https://support.google.com/mail/answer/76
 
 ## Features
 
-- **Real-time sync** — Uses IMAP IDLE for instant email forwarding
+- **Real-time sync** — Uses IMAP IDLE for instant email forwarding, with polling fallback for servers that don't support it
 - **Three forwarding methods** — IMAP APPEND (preserves all headers), SMTP (enables spam filtering), or Gmail API (preserves headers + spam filtering, more complex setup)
 - **Multiple sources** — Forward from multiple email accounts to a single Gmail
 - **Original headers preserved** — Reply and Reply-All work with original senders and recipients
@@ -286,5 +286,5 @@ Status values: `ok` (all connected), `degraded` (some connected), `error` (none 
    - **SMTP**: Sends via SMTP with Reply-To injection for reply/reply-all support
    - **Gmail API**: Imports via Gmail API with spam filtering and full header preservation
 4. Marks forwarded messages with a `$Forwarded` IMAP flag
-5. Enters IMAP IDLE mode to watch for new messages in real-time
+5. Enters IMAP IDLE mode to watch for new messages in real-time, or falls back to polling when the server doesn't support IDLE
 6. Automatically reconnects with exponential backoff on connection loss
