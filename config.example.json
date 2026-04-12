@@ -21,7 +21,8 @@
       },
       "folders": ["INBOX"],
       "deleteAfterForward": false,
-      "targetFolder": "Import/Work"
+      "targetFolder": "INBOX",
+      "targetLabels": ["Import/Work"]
     },
     {
       "name": "Personal Email",
@@ -34,7 +35,8 @@
       },
       "folders": ["INBOX", "Important"],
       "deleteAfterForward": true,
-      "targetFolder": "Import/Personal"
+      "targetFolder": "INBOX",
+      "targetLabels": ["Import/Personal"]
     }
   ],
   "healthCheck": {

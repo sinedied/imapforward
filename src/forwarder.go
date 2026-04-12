@@ -30,6 +30,7 @@ type IMAPClient interface {
 	Logout() *imapclient.Command
 	Close() error
 	Closed() <-chan struct{}
+	Caps() imap.CapSet
 	Select(mailbox string, options *imap.SelectOptions) *imapclient.SelectCommand
 	UIDSearch(criteria *imap.SearchCriteria, options *imap.SearchOptions) *imapclient.SearchCommand
 	Fetch(numSet imap.NumSet, options *imap.FetchOptions) *imapclient.FetchCommand
@@ -37,6 +38,7 @@ type IMAPClient interface {
 	Idle() (*imapclient.IdleCommand, error)
 	List(ref string, pattern string, options *imap.ListOptions) *imapclient.ListCommand
 	Append(mailbox string, size int64, options *imap.AppendOptions) *imapclient.AppendCommand
+	Copy(numSet imap.NumSet, mailbox string) *imapclient.CopyCommand
 	Create(mailbox string, options *imap.CreateOptions) *imapclient.Command
 	Expunge() *imapclient.ExpungeCommand
 }
@@ -377,7 +379,7 @@ func (f *Forwarder) forwardMessage(ctx context.Context, client *imapclient.Clien
 		return fmt.Errorf("no body section in response")
 	}
 
-	if err := f.sender.Send(ctx, rawMessage, f.source.TargetFolder); err != nil {
+	if err := f.sender.Send(ctx, rawMessage, f.source.TargetFolder, f.source.TargetLabels); err != nil {
 		return fmt.Errorf("send: %w", err)
 	}
 

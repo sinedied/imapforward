@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -38,6 +39,7 @@ type GmailAPISender struct {
 	httpClient     *http.Client
 	accessToken    string
 	tokenExpiry    time.Time
+	labelsLoaded   bool
 	labelCache     map[string]string // label name → label ID
 	gmailImportURL string
 	gmailLabelsURL string
@@ -58,7 +60,7 @@ func NewGmailAPISender(config GmailAPIConfig, userEmail string) *GmailAPISender 
 	}
 }
 
-func (s *GmailAPISender) Send(ctx context.Context, rawMessage []byte, targetFolder string) error {
+func (s *GmailAPISender) Send(ctx context.Context, rawMessage []byte, targetFolder string, targetLabels []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -69,16 +71,29 @@ func (s *GmailAPISender) Send(ctx context.Context, rawMessage []byte, targetFold
 
 	importURL := s.gmailImportURL + "?uploadType=multipart&internalDateSource=dateHeader&neverMarkSpam=false"
 
+	primaryFolder := targetFolder
+	if primaryFolder == "" {
+		primaryFolder = "INBOX"
+	}
+	extraLabels := normalizeTargetLabels(primaryFolder, targetLabels)
+
 	// Build label list — UNREAD always, INBOX only when no custom target folder
 	labelIDs := []string{"UNREAD"}
-	if targetFolder != "" && targetFolder != "INBOX" {
-		labelID, err := s.ensureLabel(ctx, token, targetFolder)
+	if primaryFolder != "INBOX" {
+		labelID, err := s.ensureLabel(ctx, token, primaryFolder)
 		if err != nil {
-			return fmt.Errorf("ensure label %q: %w", targetFolder, err)
+			return fmt.Errorf("ensure label %q: %w", primaryFolder, err)
 		}
 		labelIDs = append(labelIDs, labelID)
 	} else {
 		labelIDs = append(labelIDs, "INBOX")
+	}
+	for _, label := range extraLabels {
+		labelID, err := s.ensureLabel(ctx, token, label)
+		if err != nil {
+			return fmt.Errorf("ensure label %q: %w", label, err)
+		}
+		labelIDs = append(labelIDs, labelID)
 	}
 	metadata, err := json.Marshal(map[string]interface{}{"labelIds": labelIDs})
 	if err != nil {
@@ -147,38 +162,16 @@ func (s *GmailAPISender) ensureLabel(ctx context.Context, token, labelName strin
 		return id, nil
 	}
 
-	// List existing labels to find a match
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.gmailLabelsURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("create list labels request: %w", err)
+	if err := s.loadLabels(ctx, token); err != nil {
+		return "", err
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("list labels: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
-		return "", fmt.Errorf("list labels failed (status %d): %s", resp.StatusCode, body)
+	if id, ok := s.labelCache[labelName]; ok {
+		return id, nil
 	}
 
-	var listResp struct {
-		Labels []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		} `json:"labels"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
-		return "", fmt.Errorf("decode labels: %w", err)
-	}
-
-	for _, l := range listResp.Labels {
-		if l.Name == labelName {
-			s.labelCache[labelName] = l.ID
-			return l.ID, nil
+	if parent := parentLabel(labelName); parent != "" {
+		if _, err := s.ensureLabel(ctx, token, parent); err != nil {
+			return "", err
 		}
 	}
 
@@ -217,6 +210,54 @@ func (s *GmailAPISender) ensureLabel(ctx context.Context, token, labelName strin
 	s.logger.Info("Created Gmail label: %s (ID: %s)", created.Name, created.ID)
 	s.labelCache[labelName] = created.ID
 	return created.ID, nil
+}
+
+func (s *GmailAPISender) loadLabels(ctx context.Context, token string) error {
+	if s.labelsLoaded {
+		return nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.gmailLabelsURL, nil)
+	if err != nil {
+		return fmt.Errorf("create list labels request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("list labels: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return fmt.Errorf("list labels failed (status %d): %s", resp.StatusCode, body)
+	}
+
+	var listResp struct {
+		Labels []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"labels"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&listResp); err != nil {
+		return fmt.Errorf("decode labels: %w", err)
+	}
+
+	for _, l := range listResp.Labels {
+		s.labelCache[l.Name] = l.ID
+	}
+
+	s.labelsLoaded = true
+	return nil
+}
+
+func parentLabel(label string) string {
+	idx := strings.LastIndex(label, "/")
+	if idx <= 0 {
+		return ""
+	}
+	return label[:idx]
 }
 
 // getAccessToken returns a valid access token, refreshing if expired.
