@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ const (
 	forwardedFlag      = "$Forwarded"
 	reconnectBaseDelay = 1 * time.Second
 	reconnectMaxDelay  = 60 * time.Second
+	pollInterval       = 30 * time.Second
 )
 
 // ForwarderStatus describes the current state of a forwarder.
@@ -249,7 +251,8 @@ func (f *Forwarder) monitorFolder(ctx context.Context, folder string, listFolder
 		f.logger.Error("Error forwarding messages in %q: %v", folder, err)
 	}
 
-	// Watch for new messages via IDLE
+	// Watch for new messages via IDLE, or fall back to polling when the server
+	// doesn't advertise IDLE support.
 	return f.watchFolder(ctx, client, folder, newMail)
 }
 
@@ -268,6 +271,11 @@ func (f *Forwarder) listAvailableFolders(client *imapclient.Client) {
 }
 
 func (f *Forwarder) watchFolder(ctx context.Context, client *imapclient.Client, folder string, newMail <-chan struct{}) error {
+	if !supportsIdle(client.Caps()) {
+		f.logger.Info("Server does not support IDLE, falling back to NOOP polling every %v for %s", pollInterval, folder)
+		return f.pollFolder(ctx, client, folder)
+	}
+
 	f.logger.Info("Watching for new messages in %s...", folder)
 
 	for {
@@ -277,6 +285,10 @@ func (f *Forwarder) watchFolder(ctx context.Context, client *imapclient.Client, 
 
 		idleCmd, err := client.Idle()
 		if err != nil {
+			if shouldFallbackFromIdleError(err) {
+				f.logger.Warn("IDLE rejected by server, falling back to NOOP polling for %s: %v", folder, err)
+				return f.pollFolder(ctx, client, folder)
+			}
 			return fmt.Errorf("idle: %w", err)
 		}
 
@@ -310,6 +322,45 @@ func (f *Forwarder) watchFolder(ctx context.Context, client *imapclient.Client, 
 			f.logger.Error("Error forwarding messages in %q: %v", folder, err)
 		}
 	}
+}
+
+func (f *Forwarder) pollFolder(ctx context.Context, client *imapclient.Client, folder string) error {
+	f.logger.Info("Polling for new messages in %s with NOOP every %v...", folder, pollInterval)
+
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-client.Closed():
+			return fmt.Errorf("connection closed during polling")
+		case <-ticker.C:
+			if err := client.Noop().Wait(); err != nil {
+				return fmt.Errorf("noop: %w", err)
+			}
+			if err := f.forwardNewMessages(ctx, client); err != nil {
+				f.logger.Error("Error forwarding messages in %q: %v", folder, err)
+			}
+		}
+	}
+}
+
+func supportsIdle(caps imap.CapSet) bool {
+	return caps.Has(imap.CapIdle)
+}
+
+func shouldFallbackFromIdleError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "unrecognized command") ||
+		strings.Contains(msg, "unknown command") ||
+		strings.Contains(msg, "command unknown") ||
+		strings.Contains(msg, "not supported")
 }
 
 func (f *Forwarder) forwardNewMessages(ctx context.Context, client *imapclient.Client) error {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"testing"
+
+	"github.com/emersion/go-imap/v2"
 )
 
 func TestForwarder_GetStatus_Initial(t *testing.T) {
@@ -113,6 +115,78 @@ func TestForwarder_RunCancellation(t *testing.T) {
 	fwd.Run(ctx)
 }
 
+func TestSupportsIdle(t *testing.T) {
+	caps := imap.CapSet{
+		imap.CapIdle: {},
+	}
+
+	if !supportsIdle(caps) {
+		t.Fatal("expected IDLE to be supported")
+	}
+}
+
+func TestSupportsIdle_IMAP4rev2(t *testing.T) {
+	caps := imap.CapSet{
+		imap.CapIMAP4rev2: {},
+	}
+
+	if !supportsIdle(caps) {
+		t.Fatal("expected IMAP4rev2 to imply IDLE support")
+	}
+}
+
+func TestSupportsIdle_Unsupported(t *testing.T) {
+	caps := imap.CapSet{
+		imap.CapIMAP4rev1: {},
+		imap.CapUIDPlus:   {},
+	}
+
+	if supportsIdle(caps) {
+		t.Fatal("expected IDLE to be unsupported")
+	}
+}
+
+func TestShouldFallbackFromIdleError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{
+			name: "bad unrecognized command",
+			err:  context.DeadlineExceeded, // overwritten below would be awkward inline if no fmt
+			want: true,
+		},
+		{
+			name: "not supported",
+			err:  nil,
+			want: true,
+		},
+		{
+			name: "other error",
+			err:  nil,
+			want: false,
+		},
+		{
+			name: "nil",
+			err:  nil,
+			want: false,
+		},
+	}
+
+	tests[0].err = testError("imap: BAD Unrecognized command")
+	tests[1].err = testError("imap: IDLE not supported")
+	tests[2].err = testError("connection reset by peer")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldFallbackFromIdleError(tt.err); got != tt.want {
+				t.Fatalf("shouldFallbackFromIdleError(%v) = %v, want %v", tt.err, got, tt.want)
+			}
+		})
+	}
+}
+
 type mockSender struct {
 	sent   [][]byte
 	closed bool
@@ -130,4 +204,10 @@ func (m *mockSender) Send(ctx context.Context, rawMessage []byte, targetFolder s
 func (m *mockSender) Close() error {
 	m.closed = true
 	return nil
+}
+
+type testError string
+
+func (e testError) Error() string {
+	return string(e)
 }
