@@ -204,6 +204,12 @@ const IMPLICIT_TLS_PORTS = new Set([465, 993]);
                             placeholder="Import/Work" />
                           <span class="hint">Override target mailbox for this source (IMAP only)</span>
                         </div>
+                        <div class="field">
+                          <label [for]="'s-targetLabels-' + i">Target Labels</label>
+                          <input [id]="'s-targetLabels-' + i" formControlName="targetLabels"
+                            placeholder="Import/Work, Import/Team" />
+                          <span class="hint">Extra Gmail labels to apply after import when supported</span>
+                        </div>
                       </div>
                       <div class="form-row">
                         <div class="field field-xs">
@@ -743,6 +749,7 @@ export class ConfigTool {
       } : {}),
       sources: (v.sources ?? []).map((s) => {
         const tf = (s as Record<string, unknown>)?.['targetFolder'] as string | undefined;
+        const tl = this.parseFolders((s as Record<string, unknown>)?.['targetLabels'] as string);
         return {
           name: s?.name || '',
           host: s?.host || '',
@@ -755,6 +762,7 @@ export class ConfigTool {
           folders: this.parseFolders(s?.folders as string),
           deleteAfterForward: s?.deleteAfterForward ?? false,
           ...(tf ? {targetFolder: tf} : {}),
+          ...(tl.length > 0 ? {targetLabels: tl} : {}),
         };
       }),
     };
@@ -783,6 +791,7 @@ export class ConfigTool {
       folders: ['INBOX'],
       deleteAfterForward: [false],
       targetFolder: [''],
+      targetLabels: [''],
     });
   }
 

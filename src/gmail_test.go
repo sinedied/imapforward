@@ -58,7 +58,7 @@ func TestGmailAPISender_Send_Success(t *testing.T) {
 
 	sender := newTestGmailSender(server)
 	rawMsg := []byte("From: sender@example.com\r\nSubject: Test\r\n\r\nBody")
-	if err := sender.Send(context.Background(), rawMsg, ""); err != nil {
+	if err := sender.Send(context.Background(), rawMsg, "", nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -87,7 +87,7 @@ func TestGmailAPISender_Send_TokenError(t *testing.T) {
 	defer server.Close()
 
 	sender := newTestGmailSender(server)
-	if err := sender.Send(context.Background(), []byte("test"), ""); err == nil {
+	if err := sender.Send(context.Background(), []byte("test"), "", nil); err == nil {
 		t.Fatal("expected error for bad token")
 	}
 }
@@ -105,7 +105,7 @@ func TestGmailAPISender_Send_APIError(t *testing.T) {
 	defer server.Close()
 
 	sender := newTestGmailSender(server)
-	if err := sender.Send(context.Background(), []byte("test"), ""); err == nil {
+	if err := sender.Send(context.Background(), []byte("test"), "", nil); err == nil {
 		t.Fatal("expected error for API failure")
 	}
 }
@@ -126,7 +126,7 @@ func TestGmailAPISender_TokenCaching(t *testing.T) {
 
 	sender := newTestGmailSender(server)
 	for i := 0; i < 2; i++ {
-		if err := sender.Send(context.Background(), []byte("test"), ""); err != nil {
+		if err := sender.Send(context.Background(), []byte("test"), "", nil); err != nil {
 			t.Fatalf("send %d: %v", i, err)
 		}
 	}
@@ -166,14 +166,14 @@ func TestGmailAPISender_Send_WithTargetFolder(t *testing.T) {
 	sender := newTestGmailSender(server)
 
 	// First send — should list + create label
-	if err := sender.Send(context.Background(), []byte("test msg 1"), "Import/Work"); err != nil {
+	if err := sender.Send(context.Background(), []byte("test msg 1"), "Import/Work", nil); err != nil {
 		t.Fatalf("send 1: %v", err)
 	}
 	if labelListCalls != 1 {
 		t.Errorf("expected 1 label list call, got %d", labelListCalls)
 	}
-	if labelCreateCalls != 1 {
-		t.Errorf("expected 1 label create call, got %d", labelCreateCalls)
+	if labelCreateCalls != 2 {
+		t.Errorf("expected 2 label create calls for nested label, got %d", labelCreateCalls)
 	}
 	if !strings.Contains(string(receivedBody), `"Label_123"`) {
 		t.Error("expected label ID Label_123 in metadata")
@@ -183,14 +183,14 @@ func TestGmailAPISender_Send_WithTargetFolder(t *testing.T) {
 	}
 
 	// Second send — label should be cached, no more list/create calls
-	if err := sender.Send(context.Background(), []byte("test msg 2"), "Import/Work"); err != nil {
+	if err := sender.Send(context.Background(), []byte("test msg 2"), "Import/Work", nil); err != nil {
 		t.Fatalf("send 2: %v", err)
 	}
 	if labelListCalls != 1 {
 		t.Errorf("expected label list calls still 1 (cached), got %d", labelListCalls)
 	}
-	if labelCreateCalls != 1 {
-		t.Errorf("expected label create calls still 1 (cached), got %d", labelCreateCalls)
+	if labelCreateCalls != 2 {
+		t.Errorf("expected label create calls still 2 (cached), got %d", labelCreateCalls)
 	}
 }
 
@@ -216,11 +216,58 @@ func TestGmailAPISender_Send_ExistingLabel(t *testing.T) {
 	defer server.Close()
 
 	sender := newTestGmailSender(server)
-	if err := sender.Send(context.Background(), []byte("test"), "MyLabel"); err != nil {
+	if err := sender.Send(context.Background(), []byte("test"), "MyLabel", nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if labelCreateCalls != 0 {
 		t.Errorf("expected 0 label create calls for existing label, got %d", labelCreateCalls)
+	}
+}
+
+func TestGmailAPISender_Send_WithTargetLabels(t *testing.T) {
+	var receivedBody []byte
+	var created []string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/token":
+			tokenHandler(w, r)
+		case r.URL.Path == "/labels" && r.Method == http.MethodGet:
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"labels": [{"id": "Label_import", "name": "Import"}]}`))
+		case r.URL.Path == "/labels" && r.Method == http.MethodPost:
+			body, _ := io.ReadAll(r.Body)
+			created = append(created, string(body))
+			w.Header().Set("Content-Type", "application/json")
+			if strings.Contains(string(body), `"Import/Work"`) {
+				_, _ = w.Write([]byte(`{"id": "Label_work", "name": "Import/Work"}`))
+			} else {
+				_, _ = w.Write([]byte(`{"id": "Label_other", "name": "Other"}`))
+			}
+		case r.URL.Path == "/import":
+			receivedBody, _ = io.ReadAll(r.Body)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id": "msg789"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	sender := newTestGmailSender(server)
+	err := sender.Send(context.Background(), []byte("test"), "INBOX", []string{"Import/Work", "Import/Work", "INBOX"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(created) != 1 || !strings.Contains(created[0], `"Import/Work"`) {
+		t.Fatalf("expected only nested label creation, got %v", created)
+	}
+	if !strings.Contains(string(receivedBody), `"INBOX"`) {
+		t.Fatal("expected INBOX label in metadata")
+	}
+	if !strings.Contains(string(receivedBody), `"Label_work"`) {
+		t.Fatal("expected extra target label in metadata")
 	}
 }
 
