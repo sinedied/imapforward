@@ -46,10 +46,11 @@ release-prepare version:
 # Cross-compile binaries for all platforms
 build-all version="dev":
     mkdir -p dist
-    for pair in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do \
-        os=${pair%/*}; arch=${pair#*/}; ext=""; \
+    for pair in linux/386 linux/amd64 linux/arm/v6 linux/arm/v7 linux/arm64 linux/ppc64le linux/s390x darwin/amd64 darwin/arm64 windows/amd64; do \
+        os=$(cut -d / -f 1 <<< $pair); arch=$(cut -d / -f 2 <<< $pair); variant=$(cut -d / -f 3 <<< $pair); ext=""; \
         [ "$os" = "windows" ] && ext=".exe"; \
-        CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build -ldflags="-s -w -X main.version={{version}}" -o "dist/imapforward-${os}-${arch}${ext}" ./src/; \
+        [ "$variant" != "" ] && ext=$variant; \
+        CGO_ENABLED=0 GOOS=$os GOARCH=$arch GOARM=${variant#*v} go build -ldflags="-s -w -X main.version={{version}}" -o "dist/imapforward-${os}-${arch}${ext}" ./src/; \
     done
 
 # Clean build artifacts
